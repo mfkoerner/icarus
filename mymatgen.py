@@ -372,10 +372,21 @@ for element in HHI_P:
 data_by_form = {i['formula']: i for i in data.values()}
 
 # useful funcitons
-def abundance_and_HHI(formula):
-    """Make sure formula is a dictionary of 'element': number
-    Cannot handle Actinides
-    Returns tuple of (abundance, HHI_Production, HHI_Reserve)"""
+def abundance_and_HHI(formula, strform = False):
+    """Calculates crustal abundance and Herfindahi-Hirschman index for a given formula
+
+    Inputs:     formula as a dictionary of {'element1': number1, 'element2': number2, ...}
+                strform would allow one to input elements as they would in dict_formula_from_str defaults to false
+                strform input looks like MgH2SO5 (exceptions in dict_formula_from_str documentation)
+
+    Outputs:    tuple of (abundance, HHI_Production, HHI_Reserve)
+                with abundance units of Parts Per Million (ppm)
+                HHI can range from 0 (spread evenly over infinite countries) to 10,000 (all from one country)
+
+    exceptions: Cannot handle Actinides
+    """
+    if strform:
+        formula = dict_formula_from_str(formula)
     components = []
     for atom in formula.keys():
         # print(atom)
@@ -391,9 +402,19 @@ def abundance_and_HHI(formula):
     avgHHIP = np.sum(components[0] * components[2]) / np.sum(components[0])
     avgHHIR = np.sum(components[0] * components[3]) / np.sum(components[0])    
     return((1/avgScarcity, avgHHIP, avgHHIR))
-def dict_formula(strform):
-    """Returns formula in 'element': number format from string pretty formula
-    Cannot handle pharentesis e.g. K2CaH8(N3O)4"""
+
+def dict_formula_from_str(strform):
+    """Creates a dictionary format of a compounds from a string format
+
+    Inputs:     string of the standard form like "CsCl", "C6H12O", "CO2", "MgH2SO5"
+                capitalization matters!
+                cannot handle "()" so Na3Ca(BO2)5 would not work
+                can handle double counting an element so CH3NH3PbI3 returns {'C': 1, 'I': 3, 'Pb': 1, 'H': 6, 'N': 1}
+
+    Outputs:    formula as a dictionary of {'element1': number1, 'element2': number2, ...}
+
+    Exceptions: Cannot handle pharentesis
+    """
     UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     LOWER = 'abcdefghijklmnopqrstuvwxyz'
     NUMBER = '0123456789'
@@ -403,6 +424,7 @@ def dict_formula(strform):
     out = {}
     for i in range(len(upper)):
         start = upper[i]
+        # Finding element name and number
         try:
             end = upper[i+1]
         except IndexError:
@@ -414,6 +436,10 @@ def dict_formula(strform):
             nel = 1
             numstart = end
         element = strform[start:numstart]
-        out[element] = nel
+        # end of element name and number
+        if element in set(out.keys()):          #Checking for double counting
+            out[element] += nel
+        else:                                   #Non double counted (normal)
+            out[element] = nel
     return(out)
 
