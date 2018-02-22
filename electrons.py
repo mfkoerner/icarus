@@ -29,10 +29,11 @@ See description of function arguments for 'spaghetti' and 'spiky' in the respect
 
 
 
+import config
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use(['your_stylesheet_here'])
+plt.style.use(config.plot_style)
 
 
 

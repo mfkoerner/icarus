@@ -17,12 +17,13 @@ Currently only handles an isotropic equivalent for the dielectric / absorption t
 
 
 # import packages, apply stylesheet
+import config
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import electrons as el
 
-plt.style.use(['your_stylesheet_here'])
+plt.style.use(config.plot_style)
 
 
 # ****************** #
