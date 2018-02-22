@@ -18,6 +18,7 @@ Dependencies:
 
 
 # IMPORT PACKAGES
+import config
 import electrons as el
 import os, json, pickle
 np = el.np
@@ -29,13 +30,13 @@ from pymatgen.ext.matproj import MPRestError
 from json import JSONDecodeError
 
 # CHANGE THIS LINE FOR YOUR PARTICULAR MATERIALS PROJECT API KEY
-mpr = MPRester('API_KEY_HERE')
+mpr = MPRester(config.matprojapi)
 
 # CHANGE THIS FOR YOUR PARTICULAR SHARED DROPBOX LOCATION
-td = 'YOUR_SHARED_LOCATION'
+td = config.shared_loc
 
 # CHANGE THIS FOR YOUR PARTICULAR LOCAL ARCHIVE LOCATION
-ad = 'YOUR_LOCAL_ARCHIVE_LOCATION'
+ad = config.local_archive
 
 
 
