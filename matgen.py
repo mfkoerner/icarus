@@ -19,7 +19,7 @@ Dependencies:
 
 # IMPORT PACKAGES
 import config
-import electrons as el
+import electrons as el, edges as ed
 import os, json, pickle
 np = el.np
 plt = el.plt
@@ -29,13 +29,10 @@ from pymatgen.electronic_structure.bandstructure import BandStructure
 from pymatgen.ext.matproj import MPRestError
 from json import JSONDecodeError
 
-# CHANGE THIS LINE FOR YOUR PARTICULAR MATERIALS PROJECT API KEY
 mpr = MPRester(config.matprojapi)
 
-# CHANGE THIS FOR YOUR PARTICULAR SHARED DROPBOX LOCATION
 td = config.shared_loc
 
-# CHANGE THIS FOR YOUR PARTICULAR LOCAL ARCHIVE LOCATION
 ad = config.local_archive
 
 
@@ -248,7 +245,11 @@ def mpSpaghetti(mpid, ax=None, El=None, lblOffset=0.03, ktol=1e-1, scissor=None,
 		ax.set_ylabel('$E-E_{VBM}$ (eV)')
 		if El is not None:
 			ax.set_ylim(El)
+<<<<<<< HEAD
 	return kd, E, K, None, pb
+=======
+	return kd, E, K, dc, pb
+>>>>>>> newdoug
 
 def showRandom(A, ax=None, ed=False, ktol=1e-1):
 	''' (Optionally) plots random band structure from input list and fits effective masses '''
@@ -422,6 +423,7 @@ def masterIndirectList():
 
 def calcMasses(mpids, ktol=1e-1):
 	''' '''
+<<<<<<< HEAD
 	import edges as ed
 	for j, ii in enumerate(mpids):
 		try:
@@ -440,16 +442,29 @@ def calcMasses(mpids, ktol=1e-1):
 			RLmat = getBSRecipLatt(ii).matrix
 			K = {i: np.dot(bs.kpoints[i].frac_coords, RLmat)/2/np.pi for i in range(len(bs.kpoints))}
 			bzl = None
+=======
+	for j, mpid in enumerate(mpids):
+		try:
+			E, K, _ = getMPbands(mpid)
+			print('\n############################# {} / {} #############################'.format(j+1, len(mpids)))
+>>>>>>> newdoug
 			kd, _, pb = el.momentumCoord(K, ktol=ktol)
 			me, mh = ed.masses(kd, E, K, pb, ax=None)
 			data = {
 				'me_min': np.min(me), 'me_max': np.max(me), 'me_mean': np.mean(me),
 				'mh_min': np.min(mh), 'mh_max': np.max(mh), 'mh_mean': np.mean(mh)
 				}
+<<<<<<< HEAD
 			with open(os.path.join(ad, 'MASS/{}'.format(ii)), 'w') as fh:
 				json.dump(data, fh)
 		except:
 			print('FAILED TO CALCULATE FOR {}'.format(ii))
+=======
+			with open(os.path.join(ad, 'MASS/{}'.format(mpid)), 'w') as fh:
+				json.dump(data, fh)
+		except:
+			print('FAILED TO CALCULATE FOR {}'.format(mpid))
+>>>>>>> newdoug
 
 # fin.
 

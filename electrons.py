@@ -29,11 +29,23 @@ See description of function arguments for 'spaghetti' and 'spiky' in the respect
 
 
 
+<<<<<<< HEAD
 import config
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use(config.plot_style)
+=======
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+try:
+	# filepath to matplotlib stylesheet on work computer
+	plt.style.use(['E:/Dropbox/Materials/Code/sty-plot'])
+except:
+	# filepath to matplotlib stylesheet on home computer
+	plt.style.use(['C:/Users/dhfab/Dropbox/Materials/Code/sty-plot'])
+>>>>>>> newdoug
 
 
 
@@ -250,12 +262,21 @@ def getTotalDOS(baseDir):
 	with open(os.path.join(baseDir, 'DOSCAR'), 'r') as f:
 		for i, line in enumerate(f):
 			if i is 5:
+<<<<<<< HEAD
 				Ef = float(line.split()[3])				#Fermi energy from DOSCAR header
 				nebin = int(line.split()[2])			#NEDOS from DOSCAR header
 				break
 	data = np.genfromtxt(os.path.join(baseDir, 'DOSCAR'), skip_header=6, max_rows=nebin)
 	E = data[:,0] - Ef 									#Energy from fermi energy
 	tdos = data[:,1]									#Dos at each energy (not cumulative, just for that energy)
+=======
+				Ef = float(line.split()[3])
+				nebin = int(line.split()[2])
+				break
+	data = np.genfromtxt(os.path.join(baseDir, 'DOSCAR'), skip_header=6, max_rows=nebin)
+	E = data[:,0] - Ef
+	tdos = data[:,1]
+>>>>>>> newdoug
 	return E, tdos
 
 def getpDOS(baseDir, nAtoms, nebin, so):
@@ -301,16 +322,28 @@ def momentumCoord(K, ktol=0.02, shuffleVec=None):
 	dirChange, pathBreak = [], []
 	if shuffleVec is not None:
 		K = {i: K[shuffleVec[i]] for i in range(len(shuffleVec))}
+<<<<<<< HEAD
+=======
+	# kstepPrev = None
+>>>>>>> newdoug
 	for i in sorted(K.keys())[1:]:
 		kstep = np.linalg.norm(K[i] - K[i-1])
 		if kstep > ktol:									# discontinuity
 			pathBreak.append(kdist[-1])
 			kdist.append(kdist[-1])
 		elif kstep == 0.:									# repitition indicates special point
+<<<<<<< HEAD
+=======
+			# if kstepPrev != 0:						# handle edge case where multiple repeats occur for some reason
+>>>>>>> newdoug
 			dirChange.append(kdist[-1])
 			kdist.append(kdist[-1])
 		else:
 			kdist.append(kdist[-1] + kstep)
+<<<<<<< HEAD
+=======
+		# kstepPrev = kstep
+>>>>>>> newdoug
 	pathBreak = np.array(pathBreak)
 	pathBreak = pathBreak[np.where(pathBreak > 0)]
 	return np.array(kdist), np.array(dirChange), pathBreak
