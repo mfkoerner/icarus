@@ -13,7 +13,7 @@ kd, E, P = el.spaghetti(ax, bd, ct, El=(-2, 2), vbmRef=True)
 
 '''
 
-import config.py
+import config
 import electrons as el
 import numpy as np
 import matplotlib.pyplot as plt
