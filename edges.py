@@ -13,11 +13,15 @@ kd, E, P = el.spaghetti(ax, bd, ct, El=(-2, 2), vbmRef=True)
 
 '''
 
-import config
 import electrons as el
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use(config.plot_style)
+try:
+	# filepath to matplotlib stylesheet on work computer
+	plt.style.use(['E:/Dropbox/Materials/Code/sty-plot'])
+except:
+	# filepath to matplotlib stylesheet on home computer
+	plt.style.use(['C:/Users/dhfab/Dropbox/Materials/Code/sty-plot'])
 from scipy.optimize import curve_fit
 
 
@@ -32,8 +36,7 @@ def quad(x, A):
 
 def curv2effMass(A):
 	''' Calculate effective mass (in units of electron rest mass) from parabolic band curvature (in units of eV Ang^2) '''
-	# hbar = 6.626e-34 # Planck constant (J s)
-	hbar = 1.055e-34
+	hbar = 1.055e-34	# Planck constant (J s)
 	m0 = 9.1094e-31  # electron mass (kg)
 	Ahat = A*1.602e-19/1e10**2 # parabolic curvature converted to units of J m^2
 	return hbar**2/2/Ahat/m0
