@@ -1,2 +1,7 @@
 The most important thing to do first is to edit your config.py
 You want to copy config_default.py to config.py and input your own information
+
+
+
+Things that are not up to date:
+absorp.py is too reliant on hard coded filepaths and is not added to the repository yet
