@@ -373,9 +373,16 @@ data_by_form = {i['formula']: i for i in data.values()}
 
 # useful funcitons
 def abundance_and_HHI(formula):
-    """Make sure formula is a dictionary of 'element': number
-    Cannot handle Actinides
-    Returns tuple of (abundance, HHI_Production, HHI_Reserve)"""
+    """Calculates crustal abundance and Herfindahi-Hirschman index for a given formula
+
+    Inputs:     formula as a dictionary of {'element1': number1, 'element2': number2, ...}
+
+    Outputs:    tuple of (abundance, HHI_Production, HHI_Reserve)
+                with abundance units of Parts Per Million (ppm)
+                HHI can range from 0 (spread evenly over infinite countries) to 10,000 (all from one country)
+
+    exceptions: Cannot handle Actinides
+    """
     components = []
     for atom in formula.keys():
         # print(atom)
@@ -391,9 +398,19 @@ def abundance_and_HHI(formula):
     avgHHIP = np.sum(components[0] * components[2]) / np.sum(components[0])
     avgHHIR = np.sum(components[0] * components[3]) / np.sum(components[0])    
     return((1/avgScarcity, avgHHIP, avgHHIR))
-def dict_formula(strform):
-    """Returns formula in 'element': number format from string pretty formula
-    Cannot handle pharentesis e.g. K2CaH8(N3O)4"""
+
+def dict_formula_from_str(strform):
+    """Creates a dictionary format of a compounds from a string format
+
+    Inputs:     string of the standard form like "CsCl", "C6H12O", "CO2", "MgH2SO5"
+                capitalization matters!
+                cannot handle "()" so Na3Ca(BO2)5 would not work
+                cannot handle double counting an element so can't do CH3NH3PbI3
+
+    Outputs:    formula as a dictionary of {'element1': number1, 'element2': number2, ...}
+
+    Exceptions: Cannot handle pharentesis or double counting (see above)
+    """
     UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     LOWER = 'abcdefghijklmnopqrstuvwxyz'
     NUMBER = '0123456789'
