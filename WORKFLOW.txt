@@ -42,7 +42,7 @@ Mitchell will merge it into the master branch
 ######################################
             Clean up
 ######################################
-git checkout master #change to master branch
-git branch -d FINISHED_PROJECT_NAME #delete old branch
-git remote prune origin #delete remote branch on home computer
-git branch -a #check updates
+git checkout master 								#change to master branch
+git branch -d FINISHED_PROJECT_NAME 				#delete old branch
+git remote prune origin 							#delete remote branch on home computer
+git branch -a 										#check updates
