@@ -35,6 +35,14 @@ git branch [-a] 									#shows all your current branches
 git branch 											#Make sure you are in the correct branch
 git push 											#Publish your changes to GitHub
 (go to https://github.com/mfkoerner/icarus)
-go to branches (optional https://github.com/mfkoerner/icarus/branches)
+go to branches tab (https://github.com/mfkoerner/icarus/branches)
 create a new pull request on your branch
 Mitchell will merge it into the master branch
+
+######################################
+            Clean up
+######################################
+git checkout master #change to master branch
+git branch -d FINISHED_PROJECT_NAME #delete old branch
+git remote prune origin #delete remote branch on home computer
+git branch -a #check updates
