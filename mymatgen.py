@@ -372,10 +372,12 @@ for element in HHI_P:
 data_by_form = {i['formula']: i for i in data.values()}
 
 # useful funcitons
-def abundance_and_HHI(formula):
+def abundance_and_HHI(formula, strform = False):
     """Calculates crustal abundance and Herfindahi-Hirschman index for a given formula
 
     Inputs:     formula as a dictionary of {'element1': number1, 'element2': number2, ...}
+                strform would allow one to input elements as they would in dict_formula_from_str defaults to false
+                strform input looks like MgH2SO5 (exceptions in dict_formula_from_str documentation)
 
     Outputs:    tuple of (abundance, HHI_Production, HHI_Reserve)
                 with abundance units of Parts Per Million (ppm)
@@ -383,6 +385,8 @@ def abundance_and_HHI(formula):
 
     exceptions: Cannot handle Actinides
     """
+    if strform:
+        formula = dict_formula_from_str(formula)
     components = []
     for atom in formula.keys():
         # print(atom)
