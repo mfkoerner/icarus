@@ -405,11 +405,11 @@ def dict_formula_from_str(strform):
     Inputs:     string of the standard form like "CsCl", "C6H12O", "CO2", "MgH2SO5"
                 capitalization matters!
                 cannot handle "()" so Na3Ca(BO2)5 would not work
-                cannot handle double counting an element so can't do CH3NH3PbI3
+                can handle double counting an element so CH3NH3PbI3 returns {'C': 1, 'I': 3, 'Pb': 1, 'H': 6, 'N': 1}
 
     Outputs:    formula as a dictionary of {'element1': number1, 'element2': number2, ...}
 
-    Exceptions: Cannot handle pharentesis or double counting (see above)
+    Exceptions: Cannot handle pharentesis
     """
     UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     LOWER = 'abcdefghijklmnopqrstuvwxyz'
@@ -420,6 +420,7 @@ def dict_formula_from_str(strform):
     out = {}
     for i in range(len(upper)):
         start = upper[i]
+        # Finding element name and number
         try:
             end = upper[i+1]
         except IndexError:
@@ -431,6 +432,10 @@ def dict_formula_from_str(strform):
             nel = 1
             numstart = end
         element = strform[start:numstart]
-        out[element] = nel
+        # end of element name and number
+        if element in set(out.keys()):          #Checking for double counting
+            out[element] += nel
+        else:                                   #Non double counted (normal)
+            out[element] = nel
     return(out)
 
