@@ -11,6 +11,7 @@ Created on Mon Feb 20 20:22:25 2017
 #  Module for crystal analysis
 ##########################################################
 
+import config
 import numpy as np
 from pymatgen import MPRester
 import pickle
@@ -20,7 +21,7 @@ import collections
 import math
 import json
 
-API_KEY = 'API_KEY_HERE'
+API_KEY = config.matprojapi
 
 
 
@@ -325,13 +326,13 @@ def get_cbm_loose(BS, cutoff = 0.026):
 ###########################
 
 # Grab data itself
-with open('/Users/mitchell/icarus/rarity/data/HHI_Production.json', 'r') as f:
+with open('data/rarity/HHI_Production.json', 'r') as f:
     HHI_P = json.load(f)
-with open('/Users/mitchell/icarus/rarity/data/HHI_Reserves.json', 'r') as f:
+with open('data/rarity/HHI_Reserves.json', 'r') as f:
     HHI_R = json.load(f)
-with open('/Users/mitchell/icarus/rarity/data/surface_abundance.json', 'r') as f:
+with open('data/rarity/surface_abundance.json', 'r') as f:
     abundance = json.load(f)
-with open('/Users/mitchell/icarus/rarity/data/weights.csv') as f:
+with open('data/rarity/weights.csv') as f:
     indata = [line.rstrip('\n').split(',') for line in f.readlines()]
 weights = {i[1]: float(i[3].strip(']').strip('[')) for i in indata[1:110]}
 rarity_allowed_atoms = {'H','Li','Be','B','C','N','O','F','Na','Mg','Al','Si','P','S','Cl','K','Ca','Sc','Ti','V','Cr',
