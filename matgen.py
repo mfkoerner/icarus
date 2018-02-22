@@ -18,8 +18,7 @@ Dependencies:
 
 
 # IMPORT PACKAGES
-import config
-import electrons as el
+import electrons as el, edges as ed
 import os, json, pickle
 np = el.np
 plt = el.plt
@@ -30,13 +29,13 @@ from pymatgen.ext.matproj import MPRestError
 from json import JSONDecodeError
 
 # CHANGE THIS LINE FOR YOUR PARTICULAR MATERIALS PROJECT API KEY
-mpr = MPRester(config.matprojapi)
+mpr = MPRester('')
 
 # CHANGE THIS FOR YOUR PARTICULAR SHARED DROPBOX LOCATION
-td = config.shared_loc
+td = 'E:/Dropbox/Materials/Share-With-People/Mitchell-Doug-Shared'
 
 # CHANGE THIS FOR YOUR PARTICULAR LOCAL ARCHIVE LOCATION
-ad = config.local_archive
+ad = 'E:/Dropbox/Materials/Research/Project-Icarus'
 
 
 
@@ -248,7 +247,7 @@ def mpSpaghetti(mpid, ax=None, El=None, lblOffset=0.03, ktol=1e-1, scissor=None,
 		ax.set_ylabel('$E-E_{VBM}$ (eV)')
 		if El is not None:
 			ax.set_ylim(El)
-	return kd, E, K, None, pb
+	return kd, E, K, dc, pb
 
 def showRandom(A, ax=None, ed=False, ktol=1e-1):
 	''' (Optionally) plots random band structure from input list and fits effective masses '''
@@ -422,34 +421,20 @@ def masterIndirectList():
 
 def calcMasses(mpids, ktol=1e-1):
 	''' '''
-	import edges as ed
-	for j, ii in enumerate(mpids):
+	for j, mpid in enumerate(mpids):
 		try:
-			try:
-				with open(os.path.join(ad, 'BS/{}'.format(ii)), 'r') as fh:
-					data = json.load(fh)
-				bs = BandStructure.from_dict(data)
-			except (JSONDecodeError, FileNotFoundError) as e:
-				print('FAILED TO LOAD {}: {}'.format(ii, e))
-				continue
-			except:
-				print('FAILED TO LOAD {}: UNKOWN ERROR'.format(ii))
-				continue
+			E, K, _ = getMPbands(mpid)
 			print('\n############################# {} / {} #############################'.format(j+1, len(mpids)))
-			E = bs.bands[Spin.up].T-bs.get_vbm()['energy']
-			RLmat = getBSRecipLatt(ii).matrix
-			K = {i: np.dot(bs.kpoints[i].frac_coords, RLmat)/2/np.pi for i in range(len(bs.kpoints))}
-			bzl = None
 			kd, _, pb = el.momentumCoord(K, ktol=ktol)
 			me, mh = ed.masses(kd, E, K, pb, ax=None)
 			data = {
 				'me_min': np.min(me), 'me_max': np.max(me), 'me_mean': np.mean(me),
 				'mh_min': np.min(mh), 'mh_max': np.max(mh), 'mh_mean': np.mean(mh)
 				}
-			with open(os.path.join(ad, 'MASS/{}'.format(ii)), 'w') as fh:
+			with open(os.path.join(ad, 'MASS/{}'.format(mpid)), 'w') as fh:
 				json.dump(data, fh)
 		except:
-			print('FAILED TO CALCULATE FOR {}'.format(ii))
+			print('FAILED TO CALCULATE FOR {}'.format(mpid))
 
 # fin.
 
