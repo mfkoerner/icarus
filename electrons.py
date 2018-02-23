@@ -250,12 +250,12 @@ def getTotalDOS(baseDir):
 	with open(os.path.join(baseDir, 'DOSCAR'), 'r') as f:
 		for i, line in enumerate(f):
 			if i is 5:
-				Ef = float(line.split()[3])				#Fermi energy from DOSCAR header
-				nebin = int(line.split()[2])			#NEDOS from DOSCAR header
+				Ef = float(line.split()[3])
+				nebin = int(line.split()[2])
 				break
 	data = np.genfromtxt(os.path.join(baseDir, 'DOSCAR'), skip_header=6, max_rows=nebin)
-	E = data[:,0] - Ef 									#Energy from fermi energy
-	tdos = data[:,1]									#Dos at each energy (not cumulative, just for that energy)
+	E = data[:,0] - Ef
+	tdos = data[:,1]
 	return E, tdos
 
 def getpDOS(baseDir, nAtoms, nebin, so):
@@ -301,16 +301,19 @@ def momentumCoord(K, ktol=0.02, shuffleVec=None):
 	dirChange, pathBreak = [], []
 	if shuffleVec is not None:
 		K = {i: K[shuffleVec[i]] for i in range(len(shuffleVec))}
+	# kstepPrev = None
 	for i in sorted(K.keys())[1:]:
 		kstep = np.linalg.norm(K[i] - K[i-1])
 		if kstep > ktol:									# discontinuity
 			pathBreak.append(kdist[-1])
 			kdist.append(kdist[-1])
 		elif kstep == 0.:									# repitition indicates special point
+			# if kstepPrev != 0:						# handle edge case where multiple repeats occur for some reason
 			dirChange.append(kdist[-1])
 			kdist.append(kdist[-1])
 		else:
 			kdist.append(kdist[-1] + kstep)
+		# kstepPrev = kstep
 	pathBreak = np.array(pathBreak)
 	pathBreak = pathBreak[np.where(pathBreak > 0)]
 	return np.array(kdist), np.array(dirChange), pathBreak
