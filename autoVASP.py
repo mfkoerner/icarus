@@ -94,9 +94,6 @@ Monkhorst-Pack
 """
 
 needforjob = {'INCAR','KPOINTS','POSCAR','POTCAR'}
-NODES = 1
-PPN   = 16
-WALLTIME = 1
 
 def write_KPOINTS(mesh, mode='auto'):
     if mode[0]=='a' or mode[0]=='A':
@@ -190,7 +187,9 @@ def absorb(indict, NBANDS):
     indict['ICHARG'] = (11, 'non-self-consistent from CHGCAR')
     indict['LWAVE'] = ('.FALSE.', 'saving space by not writing WAVECAR')
     indict['SIGMA'] = (0.002, 'electron smearing: default is 0.2 eV')
-def write_job(NODES = NODES, PPN = PPN, WALLTIME = 1):
+
+
+def write_job(NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime):
     with open('job', 'w') as f:
         f.write(jobText.format(NODES,PPN,WALLTIME))
 def subjob():

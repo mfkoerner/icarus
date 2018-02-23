@@ -19,3 +19,9 @@ local_archive = 'YOUR_LOCAL_ARCHIVE_LOCATION'
 
 # Default list of vasp directories for automated runs
 VASP_directories = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', 'ktest', 'entest', 'absorb', 'DOS']
+
+
+# mpi-run settings for vasp
+VASP_nodes = 1
+VASP_ppn   = 16
+VASP_walltime = 1
