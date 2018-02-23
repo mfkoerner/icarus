@@ -67,7 +67,6 @@ PPN   = 20
 notes = '''run from code most recently updated on Friday Feb. 23, 2018 (autoVASP.py in https://github.com/mfkoerner/icarus)
 The cutoff energies as of now are decided to be 700 eV if contains C N O F period 2 anions, and 500 eV otherwise
 All K-POINT meshes are automatic mode density of 30 except absorption which is deisity of 60 and line mode for bands of course'''
-encuts = {'default': 520}
 kpoints = {'default': [4,4,4]}
 a700 = {'C', 'N', 'O', 'F'}
 zero_spread = []
@@ -352,19 +351,6 @@ def runENTEST(Compound, RUN = True):
             subjob()
             os.chdir('../')
         os.chdir('../')
-def runSTATIC_from_ENTEST(Compound):
-    """
-    Static Portion
-    Make sure to run the same thing as last time and then put INCAR into
-    the entest folder (not necessary anymore, but its nice)
-    """
-    with open('entest/INCAR', 'r') as f:
-        inlines = f.readlines()
-    for line in inlines:
-        if 'ENCUT' in line:
-            assert( int(line.split('=')[1].strip(' ').split()[0]) == encuts[Compound] )
-    call( [ 'cp' ] + ['entest/' + i for i in os.listdir('entest')] + [ 'static' ] )
-    call( ['touch', 'static/done'] )
 
 def runSTATIC(Compound = None, kpoints = 30, encut = 'auto'):
     if Compound is None:
