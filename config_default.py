@@ -15,3 +15,7 @@ shared_loc = 'YOUR_SHARED_LOCATION'
 
 # CHANGE THIS FOR YOUR PARTICULAR LOCAL ARCHIVE LOCATION
 local_archive = 'YOUR_LOCAL_ARCHIVE_LOCATION'
+
+
+# Default list of vasp directories for automated runs
+VASP_directories = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', 'ktest', 'entest', 'absorb', 'DOS']
