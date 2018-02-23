@@ -52,6 +52,7 @@ ulimit -s unlimited
 """
 
 
+import config
 import os
 import shutil
 from subprocess import call
@@ -271,10 +272,8 @@ def runPOTCAR():
              ['/home/jdb/vasp_support/potentials/potpaw_PBE.54/{}/POTCAR'.format(i)
              for i in POSnames], stdout = f)
     write_job()
-def runDIRECTORY():
+def runDIRECTORY(dirs = config.VASP_directories):
     """ directory setup """
-    dirs = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', 'ktest', 'entest', 'absorb', 'DOS']
-    dirs = ['static', 'absorb']
     for i in dirs:
         if i not in os.listdir():
             os.mkdir(i)
