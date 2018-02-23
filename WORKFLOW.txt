@@ -11,29 +11,29 @@ git pull
 # make sure everything is ok at this point. If not, figure out the confilicts
 
 %% Create a new branch with:
-git branch YOUR_PROJECT_NAME						#Creates new branch from current branch (master)
-git checkout YOUR_PROJECT_NAME						#Switches current branch to YOUR_PROJECT_NAME
-git push --set-upstream origin YOUR_PROJECT_NAME	#Publishes the new branch to GitHub and sets it as the default for git push
+git branch YOUR_PROJECT_NAME                            #Creates new branch from current branch (master)
+git checkout YOUR_PROJECT_NAME                          #Switches current branch to YOUR_PROJECT_NAME
+git push --set-upstream origin YOUR_PROJECT_NAME        #Publishes the new branch to GitHub and sets it as the default for git push
 
 
 ######################################
           During your work
 ######################################
-git commit -am "filename: message about it" 		#do commits whenever you finish a section of code. This is a great tracking tool
-git add NEW_FILENAME 								#you need to manually add completely new files and can't use the commit -a shortcut
-git push 											#publish your commits to GitHub (do this at least daily)
-git checkout FILENAME 								#abandon changes since last commit to FILENAME
-git checkout . 										#abandon all changers since last commit
-git status 											#check status of git
-git mv FILENAME NEW_FILENAME						#important to do this instead of normal renaming
-git branch [-a] 									#shows all your current branches
+git commit -am "filename: message about it"             #do commits whenever you finish a section of code. This is a great tracking tool
+git add NEW_FILENAME                                    #you need to manually add completely new files and can't use the commit -a shortcut
+git push                                                #publish your commits to GitHub (do this at least daily)
+git checkout FILENAME                                   #abandon changes since last commit to FILENAME
+git checkout .                                          #abandon all changers since last commit (. acts on your current directory)
+git status                                              #check status of git
+git mv FILENAME NEW_FILENAME                            #important to do this instead of normal renaming
+git branch [-a]                                         #shows all your current branches
 
 
 ######################################
       When you finish a project
 ######################################
-git branch 											#Make sure you are in the correct branch
-git push 											#Publish your changes to GitHub
+git branch                                              #Make sure you are in the correct branch
+git push                                                #Publish your changes to GitHub
 (go to https://github.com/mfkoerner/icarus)
 go to branches tab (https://github.com/mfkoerner/icarus/branches)
 create a new pull request on your branch
@@ -42,7 +42,7 @@ Mitchell will merge it into the master branch
 ######################################
             Clean up
 ######################################
-git checkout master 								#change to master branch
-git branch -d FINISHED_PROJECT_NAME 				#delete old branch
-git remote prune origin 							#delete remote branch on home computer
-git branch -a 										#check updates
+git checkout master                                     #change to master branch
+git branch -d FINISHED_PROJECT_NAME                     #delete old branch
+git remote prune origin                                 #delete remote branch on home computer
+git branch -a                                           #check updates
