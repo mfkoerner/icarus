@@ -25,3 +25,4 @@ VASP_directories = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', '
 VASP_nodes = 1
 VASP_ppn   = 16
 VASP_walltime = 1
+VASP_symprec = 1e-5

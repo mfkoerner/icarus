@@ -63,13 +63,10 @@ import sys
 
 
 
-NODES = 4
-PPN   = 20
 notes = '''run from code most recently updated on Friday Feb. 23, 2018 (autoVASP.py in https://github.com/mfkoerner/icarus)
 The cutoff energies as of now are decided to be 700 eV if contains C N O F period 2 anions, and 500 eV otherwise
 All K-POINT meshes are automatic mode density of 30 except absorption which is deisity of 60 and line mode for bands of course'''
 a700 = {'C', 'N', 'O', 'F'}             #If we have any of the following elements, encut is automatically 700 instead of 500
-symprec = 1e-8
 
 recommended_PAW={ 'H':'', 'He':'', 'Li':'_sv', 'Be':'', 'B':'', 'C':'', 'N':'',
                  'O':'', 'F':'', 'Ne':'', 'Na':'_pv', 'Mg':'', 'Al':'', 'Si':''
@@ -119,7 +116,7 @@ def write_INCAR(indict, filepath = 'INCAR'):
             outlines.append('{:10}= {:15}\n'.format(key, str(indict[key])))
     with open(filepath, 'w') as f:
         f.writelines(outlines)
-def apply_all(indict, compound):
+def apply_all(indict, compound, symprec = config.VASP_symprec):
     indict['GGA'] = ('PE', 'Perdew-Burke-Ernzerhof')
     indict['LREAL'] = ('.FALSE.', 'Reciprocal space projection')
     indict['ISMEAR'] = (-5, '-5 -> tet, 0 -> gaussian')
