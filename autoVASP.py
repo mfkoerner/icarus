@@ -67,9 +67,7 @@ PPN   = 20
 notes = '''run from code most recently updated on Friday Feb. 23, 2018 (autoVASP.py in https://github.com/mfkoerner/icarus)
 The cutoff energies as of now are decided to be 700 eV if contains C N O F period 2 anions, and 500 eV otherwise
 All K-POINT meshes are automatic mode density of 30 except absorption which is deisity of 60 and line mode for bands of course'''
-kpoints = {'default': [4,4,4]}
-a700 = {'C', 'N', 'O', 'F'}
-zero_spread = []
+a700 = {'C', 'N', 'O', 'F'}             #If we have any of the following elements, encut is automatically 700 instead of 500
 symprec = 1e-8
 
 recommended_PAW={ 'H':'', 'He':'', 'Li':'_sv', 'Be':'', 'B':'', 'C':'', 'N':'',
@@ -99,11 +97,6 @@ NODES = 1
 PPN   = 16
 WALLTIME = 1
 
-def tet(x):
-    if x in zero_spread:
-        return(0)
-    else:
-        return(-5)
 def write_KPOINTS(mesh, mode='auto'):
     if mode[0]=='a' or mode[0]=='A':
         assert(isinstance(mesh, int))
@@ -131,7 +124,7 @@ def write_INCAR(indict, filepath = 'INCAR'):
 def apply_all(indict, compound):
     indict['GGA'] = ('PE', 'Perdew-Burke-Ernzerhof')
     indict['LREAL'] = ('.FALSE.', 'Reciprocal space projection')
-    indict['ISMEAR'] = (tet(compound), '-5 -> tet, 0 -> gaussian')
+    indict['ISMEAR'] = (-5, '-5 -> tet, 0 -> gaussian')
     indict['EDIFF'] = (0.00001, 'stopping criterion for electronic self-consistency')
     indict['NSW'] = (0, 'no strucural relaxation')
     indict['SYMPREC'] = (symprec, 'symmetry requirements')
