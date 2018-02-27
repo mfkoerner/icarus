@@ -12,7 +12,7 @@ Created on Mon Feb 20 20:22:25 2017
 ##########################################################
 
 import config
-import numpy as np
+import numpy as np, os
 from pymatgen import MPRester
 import pickle
 import pymatgen.io.vasp as io
@@ -34,7 +34,8 @@ API_KEY = config.matprojapi
      C 0.16
 '''
 #--------#--------#
-
+def relpath(filelocation):
+    return(os.path.join(os.path.dirname(__file__), filelocation))
 def radii(filelocation):
     d = {}
     with open(filelocation) as f:
@@ -326,13 +327,13 @@ def get_cbm_loose(BS, cutoff = 0.026):
 ###########################
 
 # Grab data itself
-with open('data/rarity/HHI_Production.json', 'r') as f:
+with open(relpath('data/rarity/HHI_Production.json'), 'r') as f:
     HHI_P = json.load(f)
-with open('data/rarity/HHI_Reserves.json', 'r') as f:
+with open(relpath('data/rarity/HHI_Reserves.json'), 'r') as f:
     HHI_R = json.load(f)
-with open('data/rarity/surface_abundance.json', 'r') as f:
+with open(relpath('data/rarity/surface_abundance.json'), 'r') as f:
     abundance = json.load(f)
-with open('data/rarity/weights.csv') as f:
+with open(relpath('data/rarity/weights.csv'), 'r') as f:
     indata = [line.rstrip('\n').split(',') for line in f.readlines()]
 weights = {i[1]: float(i[3].strip(']').strip('[')) for i in indata[1:110]}
 rarity_allowed_atoms = {'H','Li','Be','B','C','N','O','F','Na','Mg','Al','Si','P','S','Cl','K','Ca','Sc','Ti','V','Cr',
