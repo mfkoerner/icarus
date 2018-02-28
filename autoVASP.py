@@ -467,6 +467,50 @@ def runDOS(Compound = None):
 def done(arg = '.'):
     return('done' in os.listdir(arg) and 'notes' not in os.listdir(arg))
 
+
+###############################
+# Interacting with status.txt #
+###############################
+
+def write_status(status, filepath = config.statuspath):
+    """Writes a status dictionary to the official status file
+
+    Inputs
+        status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+        filepath: str filepath to status.txt file
+
+    Outputs
+        overwrites the file status.txt with the new status data
+    """
+    outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(i['mpid'], i['static'], i['absorb'], i['origin'], i['comments'])
+                for i in status.values()]
+    header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
+    outlines = [header] + outlines
+    outlines = [i + '\n' for i in outlines]
+    with open(filepath, 'w') as f:
+        f.writelines(outlines)
+
+def read_status(filepath = config.statuspath):
+    """Reads the status.txt file to a dictionary
+
+    Inputs
+        filepath: str filepath to status.txt file
+
+    Outputs
+        status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+    """
+    slens = [12, 19, 26, 38]
+    with open(filepath, 'r') as f:
+        inlines = [i.rstrip('\n') for i in f.readlines()]
+    header = inlines.pop(0)
+    headerlist = header.split()
+    inlist = [[str(i[:slens[0]]).strip(), float(i[slens[0]:slens[1]]), 
+               float(i[slens[1]:slens[2]]), str(i[slens[2]:slens[3]]).strip(),
+               str(i[slens[3]:]).strip()] for i in inlines]
+    status = {i[0]: {headerlist[j]: i[j] for j in range(5)} for i in inlist}
+    return(status)
+
+
 ###############################
 #     Old high level funcs    #
 ###############################

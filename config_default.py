@@ -21,6 +21,9 @@ local_archive = 'YOUR_LOCAL_ARCHIVE_LOCATION'
 VASP_directories = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', 'ktest', 'entest', 'absorb', 'DOS']
 
 
+# Default path to status.txt for vasp runs (contact mitchell for explanation)
+statuspath = 'path to status here'
+
 # mpi-run settings for vasp
 VASP_nodes = 1
 VASP_ppn   = 16
