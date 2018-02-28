@@ -495,6 +495,7 @@ class Status(object):
                 0  : not done
                 1  : done
                 2  : in progress
+                3  : investigate
                 -1 : abort (permanently)
         """
         if filepath is None:
