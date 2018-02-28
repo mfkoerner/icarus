@@ -472,43 +472,87 @@ def done(arg = '.'):
 # Interacting with status.txt #
 ###############################
 
-def write_status(status, filepath = config.statuspath):
-    """Writes a status dictionary to the official status file
+class Status(object):
+    """Status is used to interact with the status.txt file
+    It needs a bigger docstring"""
+    def __init__(self, filepath = config.statuspath):
+        self.filepath = filepath
+        self.dictform = self.statusread()
+        self.all_mpids = list(self.dictform.keys())
 
-    Inputs
-        status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
-        filepath: str filepath to status.txt file
+    def statuswrite(self, filepath = None):
+        """Writes a status dictionary to the official status file
 
-    Outputs
-        overwrites the file status.txt with the new status data
-    """
-    outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(i['mpid'], i['static'], i['absorb'], i['origin'], i['comments'])
-                for i in status.values()]
-    header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
-    outlines = [header] + outlines
-    outlines = [i + '\n' for i in outlines]
-    with open(filepath, 'w') as f:
-        f.writelines(outlines)
+        Inputs
+            status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+            filepath: str filepath to status.txt file
 
-def read_status(filepath = config.statuspath):
-    """Reads the status.txt file to a dictionary
+        Outputs
+            overwrites the file status.txt with the new status data
 
-    Inputs
-        filepath: str filepath to status.txt file
+        Notes on static and absorb codes
+            Both static and absorb have the same code
+                0  : not done
+                1  : done
+                2  : in progress
+                -1 : abort (permanently)
+        """
+        if filepath is None:
+            filepath = self.filepath
+        outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(i['mpid'], i['static'], i['absorb'], i['origin'], i['comments'])
+                    for i in self.dictform.values()]
+        header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
+        outlines = [header] + outlines
+        outlines = [i + '\n' for i in outlines]
+        with open(filepath, 'w') as f:
+            f.writelines(outlines)
 
-    Outputs
-        status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
-    """
-    slens = [12, 19, 26, 38]
-    with open(filepath, 'r') as f:
-        inlines = [i.rstrip('\n') for i in f.readlines()]
-    header = inlines.pop(0)
-    headerlist = header.split()
-    inlist = [[str(i[:slens[0]]).strip(), float(i[slens[0]:slens[1]]), 
-               float(i[slens[1]:slens[2]]), str(i[slens[2]:slens[3]]).strip(),
-               str(i[slens[3]:]).strip()] for i in inlines]
-    status = {i[0]: {headerlist[j]: i[j] for j in range(5)} for i in inlist}
-    return(status)
+    def statusread(self, filepath = None):
+        """Reads the status.txt file to a dictionary
+
+        Inputs
+            filepath: str filepath to status.txt file
+
+        Outputs
+            status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+        """
+        if filepath is None:
+            filepath = self.filepath
+        slens = [12, 19, 26, 38]
+        with open(filepath, 'r') as f:
+            inlines = [i.rstrip('\n') for i in f.readlines()]
+        header = inlines.pop(0)
+        headerlist = header.split()
+        inlist = [[str(i[:slens[0]]).strip(), int(i[slens[0]:slens[1]]), 
+                   int(i[slens[1]:slens[2]]), str(i[slens[2]:slens[3]]).strip(),
+                   str(i[slens[3]:]).strip()] for i in inlines]
+        status = {i[0]: {headerlist[j]: i[j] for j in range(5)} for i in inlist}
+        return(status)
+
+    def get_mpids(self, attribute, value):
+        """gets a list of mpids with a given attribute and status
+
+        Inputs:
+            status:     dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+            attribute:  one of "absorb", "status", "mpid", "origin", "comments"
+            value:      what you want your attribute to be equal to
+                        May input a list to check for multiple values
+
+        Outputs:
+            mpids:      list of ids which match the above criteria
+        """
+        if type(value) in {list, set, tuple}:
+            values = value
+        else:
+            values = [value]
+        mpidslist = []
+        for val in values:
+            mpidslist.append({i for i in self.all_mpids if self.dictform[i][attribute] == val})
+        mpids = mpidslist[0]
+        if len(mpidslist) > 1:
+            for i in range(len(mpidslist) - 1):
+                mpids = mpids.union(mpidslist[i + 1])
+        return(mpids)
 
 
 ###############################
