@@ -15,9 +15,8 @@ kd, E, P = el.spaghetti(ax, bd, ct, El=(-2, 2), vbmRef=True)
 
 import config
 import electrons as el
-import numpy as np
-import matplotlib.pyplot as plt
-plt.style.use(config.plot_style)
+np = el.np
+plt = el.plt
 from scipy.optimize import curve_fit
 
 

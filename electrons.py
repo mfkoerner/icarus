@@ -33,7 +33,10 @@ import config
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-plt.style.use(config.plot_style)
+try:
+	plt.style.use(config.plot_style)
+except:
+	plt.style.use(config.plot_style2)
 
 
 
@@ -42,7 +45,7 @@ plt.style.use(config.plot_style)
 # ******* #
 
 # list of colors for plotting orbital projections, can easily be customized
-cList = ('#FF7E0E', '#1F77B3', '#2BA02B')
+cList = ('#FF7E0E', '#1F77B3', '#2BA02B', '#b72c2c')
 
 # dictionary lookup for labels of Brillouin Zone special points, adapted from DOI:10.1016/j.commatsci.2010.05.010
 bzLabels = {
@@ -353,6 +356,20 @@ def bandgap(E, tdos, tol=1e-5):
 	vbm = x[(y>tol) & (x<0)][-1]
 	cbm = x[(y>tol) & (x>0)][0]
 	return cbm-vbm
+
+def minDirectTransition(E, kd, ax=None):
+	''' Return the energy of the smallest cross-gap direct transition, optionally annotating a band structure plot '''
+	vb = np.where(np.all(E <= 0, axis=0))[0][-1]
+	cb = np.where(np.all(E > 0, axis=0))[0][0]
+	Ediff = E[:,cb] - E[:,vb]
+	here = np.where(Ediff == np.min(Ediff))[0]
+	if ax is None:
+		return E[here[0], cb] - E[here[0], vb]
+	yl = ax.get_ylim()
+	for h in here:
+		E1, E2 = E[h, vb], E[h, cb]
+		ax.arrow(kd[h], E1, 0, E2-E1, fc=cList[3], ec=cList[3], head_length=(yl[1]-yl[0])/80, head_width=kd[-1]/80, length_includes_head=True, zorder=5)
+	return E2-E1
 
 
 
