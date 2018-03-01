@@ -52,7 +52,7 @@ ulimit -s unlimited
 """
 
 
-import config
+import icarus.config as config
 import os
 import shutil
 from subprocess import call

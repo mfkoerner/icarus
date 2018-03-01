@@ -11,7 +11,7 @@ Created on Mon Feb 20 20:22:25 2017
 #  Module for crystal analysis
 ##########################################################
 
-import config
+import icarus.config as config
 import numpy as np, os
 from pymatgen import MPRester
 import pickle
