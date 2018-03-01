@@ -340,24 +340,34 @@ def runENTEST(Compound, RUN = True):
             os.chdir('../')
         os.chdir('../')
 
-def runSTATIC(Compound = None, kpoints = 30, encut = 'auto'):
+def runSTATIC(Compound = None, kpoints = 30, encut = 'auto', submit = True):
+    """Runs a static job
+
+    Inputs
+        submit:
+            True is default and whole function runs
+            False runs everything but submit it
+            'only' assumes it has already been run with submit = False
+    """
     if Compound is None:
         Compound = autocompound()
     os.chdir('static')
-    shutil.copy('../POSCAR', '.')
-    shutil.copy('../POTCAR', '.')
-    write_KPOINTS(kpoints)
-    tester = {}
-    permaread(tester, '../params')
-    if not 'ENCUT' in tester.keys():
-        if encut == 'auto':
-            permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
-        else:
-            permawrite({'ENCUT': encut}, path = '../params')
-    indict = start_incar(Compound, 'static', Parallel = False)
-    write_INCAR(indict)
-    write_job()
-    subjob()
+    if not submit == 'only':
+        shutil.copy('../POSCAR', '.')
+        shutil.copy('../POTCAR', '.')
+        write_KPOINTS(kpoints)
+        tester = {}
+        permaread(tester, '../params')
+        if not 'ENCUT' in tester.keys():
+            if encut == 'auto':
+                permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
+            else:
+                permawrite({'ENCUT': encut}, path = '../params')
+        indict = start_incar(Compound, 'static', Parallel = False)
+        write_INCAR(indict)
+        write_job()
+    if submit:
+        subjob()
     os.chdir('../')
 
 def runBAND(Compound = None):
