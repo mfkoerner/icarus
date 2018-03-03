@@ -565,6 +565,18 @@ class Status(object):
                 mpids = mpids.union(mpidslist[i + 1])
         return(mpids)
 
+    def set_from_file(filepath):
+        """takes lines from filepath as input and returns a set of those strings"""
+        with open(filepath, 'r') as f:
+            values = {i.rstrip('\n') for i in f.readlines()}
+        return(values)
+
+    def set_to_file(yourset, filepath):
+        """writes a set to a file separated by lines"""
+        outlines = [i + '\n' for i in yourset]
+        with open('filepath', 'w') as f:
+            f.writelines(outlines)
+
 
 ###############################
 #     Old high level funcs    #
