@@ -545,7 +545,7 @@ class Status(object):
 
         Inputs:
             status:     dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
-            attribute:  one of "absorb", "status", "mpid", "origin", "comments"
+            attribute:  one of "absorb", "static", "mpid", "origin", "comments"
             value:      what you want your attribute to be equal to
                         May input a list to check for multiple values
 
@@ -582,7 +582,7 @@ class Status(object):
 
         Inputs:
             mpids:      iterable of mpid strings to set
-            attribute:  one of "absorb", "status", "mpid", "origin", "comments"
+            attribute:  one of "absorb", "static", "mpid", "origin", "comments"
             value:      what you want your attribute to be set to for all of mpids
 
         Outputs:
@@ -592,6 +592,28 @@ class Status(object):
             mpids = [mpids]
         for mpid in mpids:
             self.dictform[mpid][attribute] = value
+    def update_from_playground(self, attribute):
+        """Very dangerous function to be used after finishing a batch of calculations
+
+        Inputs:
+            attribute: either "absorb" or "static"
+
+        Filesystem inputs:
+            done:       currentdirectory/done needs to be the mpids that have finished recently
+            bad:        currentdirectory/bad  needs to be the mpids which failed recently
+
+        Outputs:
+            done:       set of stuff from done file
+            bad:        set of stuff from bad  file
+            modifies self.dictform base data to reflect the new changes
+        """
+        assert(attribute in ['absorb', 'static'], 'not a valid attribute')  #attribute needs to be one of 2 approved ones
+        done = self.set_from_file('done')
+        bad = self.set_from_file('bad')
+        self.attribute_to_value(done, attribute, 1)
+        self.attribute_to_value(bad,  attribute, 3)
+        print('remember to set comments for bad')
+        return(done, bad)
 
 
 ###############################
