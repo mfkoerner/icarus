@@ -143,7 +143,7 @@ def start_incar(compound, section, params_path = '../params', Apply_all = True, 
     if Parallel:
         parallel(indict)
     if not Absorb is None:
-        assert(isinstance(Absorb, int))
+        assert(isinstance(Absorb, int)), "Absorb needs to be and integer for start_incar"
         absorb(indict, Absorb)
     if DOS:
         dos(indict)
@@ -444,11 +444,11 @@ def runABSORB(Compound = None):
     if Compound is None:
         Compound = autocompound()
     os.chdir('absorb')
-    write_job(NODES = 1, PPN = 16, WALLTIME = 2)
+    write_job(WALLTIME = 2)
     call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'] )
     with open('../static/KPOINTS', 'r') as f:
         inlines = f.readlines()
-    assert( inlines[2][0] in {'A','a'} ) #Needs to be automatic scheme in kpoints
+    assert ( inlines[2][0] in {'A','a'} ),  "Needs to be automatic scheme in kpoints"
     density = int(inlines[3].strip(' '))
     # write_KPOINTS(3*density)
     write_KPOINTS(60); print('USING 60 KPOINTS FORCED. Change back later')
