@@ -574,7 +574,7 @@ class Status(object):
     def set_to_file(self, yourset, filepath):
         """writes a set to a file separated by lines"""
         outlines = [i + '\n' for i in yourset]
-        with open('filepath', 'w') as f:
+        with open(filepath, 'w') as f:
             f.writelines(outlines)
 
     def attribute_to_value(self, mpids, attribute, value):
