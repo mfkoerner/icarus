@@ -607,7 +607,7 @@ class Status(object):
             bad:        set of stuff from bad  file
             modifies self.dictform base data to reflect the new changes
         """
-        assert(attribute in ['absorb', 'static'], 'not a valid attribute')  #attribute needs to be one of 2 approved ones
+        assert (attribute in ['absorb', 'static']), 'attribute needs to be one of 2 approved values'
         done = self.set_from_file('done')
         bad = self.set_from_file('bad')
         self.attribute_to_value(done, attribute, 1)
