@@ -591,7 +591,7 @@ class Status(object):
         if type(mpids) == str:          #handles single mpid passed in as a string
             mpids = [mpids]
         for mpid in mpids:
-            self.dictform[attribute] = value
+            self.dictform[mpid][attribute] = value
 
 
 ###############################
