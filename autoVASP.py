@@ -565,17 +565,33 @@ class Status(object):
                 mpids = mpids.union(mpidslist[i + 1])
         return(mpids)
 
-    def set_from_file(filepath):
+    def set_from_file(self, filepath):
         """takes lines from filepath as input and returns a set of those strings"""
         with open(filepath, 'r') as f:
             values = {i.rstrip('\n') for i in f.readlines()}
         return(values)
 
-    def set_to_file(yourset, filepath):
+    def set_to_file(self, yourset, filepath):
         """writes a set to a file separated by lines"""
         outlines = [i + '\n' for i in yourset]
         with open('filepath', 'w') as f:
             f.writelines(outlines)
+
+    def attribute_to_value(self, mpids, attribute, value):
+        """sets value of attribute to value for all mpids given
+
+        Inputs:
+            mpids:      iterable of mpid strings to set
+            attribute:  one of "absorb", "status", "mpid", "origin", "comments"
+            value:      what you want your attribute to be set to for all of mpids
+
+        Outputs:
+            modifies self.dictform (base data) to include this update
+        """
+        if type(mpids) == str:          #handles single mpid passed in as a string
+            mpids = [mpids]
+        for mpid in mpids:
+            self.dictform[attribute] = value
 
 
 ###############################
