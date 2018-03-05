@@ -19,11 +19,8 @@ Currently only handles an isotropic equivalent for the dielectric / absorption t
 # import packages, apply stylesheet
 import config
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-import electrons as el
+from electrons import np, plt, getTotalDOS, bandgap
 
-plt.style.use(config.plot_style)
 
 
 # ****************** #
@@ -163,14 +160,15 @@ def plotAbsorption(ax, hnu, alpha, xl=(0, 4), yl=(1e2, 1e7), rel2eg=None, lbl=No
 # HIGH LEVEL #
 # ********** #
 
-def optical(bd):
+def optical(bd, save=False):
 	''' DESCRIPTION GOES HERE '''
 	Nk = getNkPts(bd) 							#Gets number of irreducible kpoints but never uses it :O
 	E, eps = getDielectric(bd)   				#Gets lists of E and equivilent eigenvalues (real + i*imag) for dialectric function
 	N, alpha = dielec2optical(E, eps)			#N (dielectric constant) and alpha (absorption coefficient) from dielectric equivilent eigenvalues
 
-	Edos, tdos = el.getTotalDOS(bd)				#arrays of len NEDOS with energy and DOS at that energy
-	Eg = el.bandgap(Edos, tdos)					#Calculates bandgap from DOS data
+	Edos, tdos = getTotalDOS(bd)				#arrays of len NEDOS with energy and DOS at that energy
+	Eg = bandgap(Edos, tdos)					#Calculates bandgap from DOS data
 
-	saveResults(bd, E, alpha, eps)				#Saves Energy, absorption, eigenvalue to basedir/optical.csv
+	if save:
+		saveResults(bd, E, alpha, eps)				#Saves Energy, absorption, eigenvalue to basedir/optical.csv
 	return E, alpha, eps, N, Eg 				#Returns Energy, absorption, eigenvalue, refractive index, bandgap
