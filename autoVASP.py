@@ -52,6 +52,7 @@ ulimit -s unlimited
 """
 
 
+import icarus.config as config
 import os
 import shutil
 from subprocess import call
@@ -62,16 +63,10 @@ import sys
 
 
 
-NODES = 4
-PPN   = 20
 notes = '''run from code most recently updated on Friday Feb. 23, 2018 (autoVASP.py in https://github.com/mfkoerner/icarus)
 The cutoff energies as of now are decided to be 700 eV if contains C N O F period 2 anions, and 500 eV otherwise
 All K-POINT meshes are automatic mode density of 30 except absorption which is deisity of 60 and line mode for bands of course'''
-encuts = {'default': 520}
-kpoints = {'default': [4,4,4]}
-a700 = {'C', 'N', 'O', 'F'}
-zero_spread = []
-symprec = 1e-8
+a700 = {'C', 'N', 'O', 'F'}             #If we have any of the following elements, encut is automatically 700 instead of 500
 
 recommended_PAW={ 'H':'', 'He':'', 'Li':'_sv', 'Be':'', 'B':'', 'C':'', 'N':'',
                  'O':'', 'F':'', 'Ne':'', 'Na':'_pv', 'Mg':'', 'Al':'', 'Si':''
@@ -85,7 +80,7 @@ recommended_PAW={ 'H':'', 'He':'', 'Li':'_sv', 'Be':'', 'B':'', 'C':'', 'N':'',
                  :'_sv', 'Ba':'_sv', 'La':'', 'Ce':'', 'Pr':'_3', 'Nd':'_3', 
                  'Pm':'_3', 'Sm':'_3', 'Eu':'_2', 'Gd':'_3', 'Tb':'_3', 'Dy'
                  :'_3', 'Ho':'_3', 'Er':'_3', 'Tm':'_3', 'Yb':'_2', 'Lu':'_3', 
-                 'Hf':'_pv', 'Ta':'_pv', 'W':'_pv', 'Re':'', 'Os':'', 'Ir':'', 
+                 'Hf':'_pv', 'Ta':'_pv', 'W':'_sv', 'Re':'', 'Os':'', 'Ir':'', 
                  'Pt':'', 'Au':'', 'Hg':'', 'Tl':'_d', 'Pb':'_d', 'Bi':'_d', 
                  'Po':'_d', 'At':'_d', 'Rn':'', 'Fr':'_sv', 'Ra':'_sv', 'Ac':''
                  , 'Th':'', 'Pa':'', 'U':'', 'Np':'', 'Pu':'', 'Am':'', 'Cm':''}
@@ -96,15 +91,7 @@ Monkhorst-Pack
 """
 
 needforjob = {'INCAR','KPOINTS','POSCAR','POTCAR'}
-NODES = 1
-PPN   = 16
-WALLTIME = 1
 
-def tet(x):
-    if x in zero_spread:
-        return(0)
-    else:
-        return(-5)
 def write_KPOINTS(mesh, mode='auto'):
     if mode[0]=='a' or mode[0]=='A':
         assert(isinstance(mesh, int))
@@ -129,10 +116,10 @@ def write_INCAR(indict, filepath = 'INCAR'):
             outlines.append('{:10}= {:15}\n'.format(key, str(indict[key])))
     with open(filepath, 'w') as f:
         f.writelines(outlines)
-def apply_all(indict, compound):
+def apply_all(indict, compound, symprec = config.VASP_symprec):
     indict['GGA'] = ('PE', 'Perdew-Burke-Ernzerhof')
     indict['LREAL'] = ('.FALSE.', 'Reciprocal space projection')
-    indict['ISMEAR'] = (tet(compound), '-5 -> tet, 0 -> gaussian')
+    indict['ISMEAR'] = (-5, '-5 -> tet, 0 -> gaussian')
     indict['EDIFF'] = (0.00001, 'stopping criterion for electronic self-consistency')
     indict['NSW'] = (0, 'no strucural relaxation')
     indict['SYMPREC'] = (symprec, 'symmetry requirements')
@@ -156,7 +143,7 @@ def start_incar(compound, section, params_path = '../params', Apply_all = True, 
     if Parallel:
         parallel(indict)
     if not Absorb is None:
-        assert(isinstance(Absorb, int))
+        assert(isinstance(Absorb, int)), "Absorb needs to be and integer for start_incar"
         absorb(indict, Absorb)
     if DOS:
         dos(indict)
@@ -197,7 +184,9 @@ def absorb(indict, NBANDS):
     indict['ICHARG'] = (11, 'non-self-consistent from CHGCAR')
     indict['LWAVE'] = ('.FALSE.', 'saving space by not writing WAVECAR')
     indict['SIGMA'] = (0.002, 'electron smearing: default is 0.2 eV')
-def write_job(NODES = NODES, PPN = PPN, WALLTIME = 1):
+
+
+def write_job(NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime):
     with open('job', 'w') as f:
         f.write(jobText.format(NODES,PPN,WALLTIME))
 def subjob():
@@ -279,10 +268,8 @@ def runPOTCAR():
              ['/home/jdb/vasp_support/potentials/potpaw_PBE.54/{}/POTCAR'.format(i)
              for i in POSnames], stdout = f)
     write_job()
-def runDIRECTORY():
+def runDIRECTORY(dirs = config.VASP_directories):
     """ directory setup """
-    dirs = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', 'ktest', 'entest', 'absorb', 'DOS']
-    dirs = ['static', 'absorb']
     for i in dirs:
         if i not in os.listdir():
             os.mkdir(i)
@@ -352,38 +339,35 @@ def runENTEST(Compound, RUN = True):
             subjob()
             os.chdir('../')
         os.chdir('../')
-def runSTATIC_from_ENTEST(Compound):
-    """
-    Static Portion
-    Make sure to run the same thing as last time and then put INCAR into
-    the entest folder (not necessary anymore, but its nice)
-    """
-    with open('entest/INCAR', 'r') as f:
-        inlines = f.readlines()
-    for line in inlines:
-        if 'ENCUT' in line:
-            assert( int(line.split('=')[1].strip(' ').split()[0]) == encuts[Compound] )
-    call( [ 'cp' ] + ['entest/' + i for i in os.listdir('entest')] + [ 'static' ] )
-    call( ['touch', 'static/done'] )
 
-def runSTATIC(Compound = None, kpoints = 30, encut = 'auto'):
+def runSTATIC(Compound = None, kpoints = 30, encut = 'auto', submit = True):
+    """Runs a static job
+
+    Inputs
+        submit:
+            True is default and whole function runs
+            False runs everything but submit it
+            'only' assumes it has already been run with submit = False
+    """
     if Compound is None:
         Compound = autocompound()
     os.chdir('static')
-    shutil.copy('../POSCAR', '.')
-    shutil.copy('../POTCAR', '.')
-    write_KPOINTS(kpoints)
-    tester = {}
-    permaread(tester, '../params')
-    if not 'ENCUT' in tester.keys():
-        if encut == 'auto':
-            permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
-        else:
-            permawrite({'ENCUT': encut}, path = '../params')
-    indict = start_incar(Compound, 'static', Parallel = False)
-    write_INCAR(indict)
-    write_job()
-    subjob()
+    if not submit == 'only':
+        shutil.copy('../POSCAR', '.')
+        shutil.copy('../POTCAR', '.')
+        write_KPOINTS(kpoints)
+        tester = {}
+        permaread(tester, '../params')
+        if not 'ENCUT' in tester.keys():
+            if encut == 'auto':
+                permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
+            else:
+                permawrite({'ENCUT': encut}, path = '../params')
+        indict = start_incar(Compound, 'static', Parallel = False)
+        write_INCAR(indict)
+        write_job()
+    if submit:
+        subjob()
     os.chdir('../')
 
 def runBAND(Compound = None):
@@ -460,11 +444,11 @@ def runABSORB(Compound = None):
     if Compound is None:
         Compound = autocompound()
     os.chdir('absorb')
-    write_job(NODES = 1, PPN = 16, WALLTIME = 2)
+    write_job(WALLTIME = 2)
     call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'] )
     with open('../static/KPOINTS', 'r') as f:
         inlines = f.readlines()
-    assert( inlines[2][0] in {'A','a'} ) #Needs to be automatic scheme in kpoints
+    assert ( inlines[2][0] in {'A','a'} ),  "Needs to be automatic scheme in kpoints"
     density = int(inlines[3].strip(' '))
     # write_KPOINTS(3*density)
     write_KPOINTS(60); print('USING 60 KPOINTS FORCED. Change back later')
@@ -492,6 +476,145 @@ def runDOS(Compound = None):
 
 def done(arg = '.'):
     return('done' in os.listdir(arg) and 'notes' not in os.listdir(arg))
+
+
+###############################
+# Interacting with status.txt #
+###############################
+
+class Status(object):
+    """Status is used to interact with the status.txt file
+    It needs a bigger docstring"""
+    def __init__(self, filepath = config.statuspath):
+        self.filepath = filepath
+        self.dictform = self.statusread()
+        self.all_mpids = list(self.dictform.keys())
+
+    def statuswrite(self, filepath = None):
+        """Writes a status dictionary to the official status file
+
+        Inputs
+            status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+            filepath: str filepath to status.txt file
+
+        Outputs
+            overwrites the file status.txt with the new status data
+
+        Notes on static and absorb codes
+            Both static and absorb have the same code
+                0  : not done
+                1  : done
+                2  : in progress
+                3  : investigate
+                -1 : abort (permanently)
+        """
+        if filepath is None:
+            filepath = self.filepath
+        outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(i['mpid'], i['static'], i['absorb'], i['origin'], i['comments'])
+                    for i in self.dictform.values()]
+        header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
+        outlines = [header] + outlines
+        outlines = [i + '\n' for i in outlines]
+        with open(filepath, 'w') as f:
+            f.writelines(outlines)
+
+    def statusread(self, filepath = None):
+        """Reads the status.txt file to a dictionary
+
+        Inputs
+            filepath: str filepath to status.txt file
+
+        Outputs
+            status: dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+        """
+        if filepath is None:
+            filepath = self.filepath
+        slens = [12, 19, 26, 38]
+        with open(filepath, 'r') as f:
+            inlines = [i.rstrip('\n') for i in f.readlines()]
+        header = inlines.pop(0)
+        headerlist = header.split()
+        inlist = [[str(i[:slens[0]]).strip(), int(i[slens[0]:slens[1]]), 
+                   int(i[slens[1]:slens[2]]), str(i[slens[2]:slens[3]]).strip(),
+                   str(i[slens[3]:]).strip()] for i in inlines]
+        status = {i[0]: {headerlist[j]: i[j] for j in range(5)} for i in inlist}
+        return(status)
+
+    def get_mpids(self, attribute, value):
+        """gets a list of mpids with a given attribute and status
+
+        Inputs:
+            status:     dictionary of {mpid1: {trait: value}, mpid2: {trait: value}}
+            attribute:  one of "absorb", "static", "mpid", "origin", "comments"
+            value:      what you want your attribute to be equal to
+                        May input a list to check for multiple values
+
+        Outputs:
+            mpids:      list of ids which match the above criteria
+        """
+        if type(value) in {list, set, tuple}:
+            values = value
+        else:
+            values = [value]
+        mpidslist = []
+        for val in values:
+            mpidslist.append({i for i in self.all_mpids if self.dictform[i][attribute] == val})
+        mpids = mpidslist[0]
+        if len(mpidslist) > 1:
+            for i in range(len(mpidslist) - 1):
+                mpids = mpids.union(mpidslist[i + 1])
+        return(mpids)
+
+    def set_from_file(self, filepath):
+        """takes lines from filepath as input and returns a set of those strings"""
+        with open(filepath, 'r') as f:
+            values = {i.rstrip('\n') for i in f.readlines()}
+        return(values)
+
+    def set_to_file(self, yourset, filepath):
+        """writes a set to a file separated by lines"""
+        outlines = [i + '\n' for i in yourset]
+        with open(filepath, 'w') as f:
+            f.writelines(outlines)
+
+    def attribute_to_value(self, mpids, attribute, value):
+        """sets value of attribute to value for all mpids given
+
+        Inputs:
+            mpids:      iterable of mpid strings to set
+            attribute:  one of "absorb", "static", "mpid", "origin", "comments"
+            value:      what you want your attribute to be set to for all of mpids
+
+        Outputs:
+            modifies self.dictform (base data) to include this update
+        """
+        if type(mpids) == str:          #handles single mpid passed in as a string
+            mpids = [mpids]
+        for mpid in mpids:
+            self.dictform[mpid][attribute] = value
+    def update_from_playground(self, attribute):
+        """Very dangerous function to be used after finishing a batch of calculations
+
+        Inputs:
+            attribute: either "absorb" or "static"
+
+        Filesystem inputs:
+            done:       currentdirectory/done needs to be the mpids that have finished recently
+            bad:        currentdirectory/bad  needs to be the mpids which failed recently
+
+        Outputs:
+            done:       set of stuff from done file
+            bad:        set of stuff from bad  file
+            modifies self.dictform base data to reflect the new changes
+        """
+        assert (attribute in ['absorb', 'static']), 'attribute needs to be one of 2 approved values'
+        done = self.set_from_file('done')
+        bad = self.set_from_file('bad')
+        self.attribute_to_value(done, attribute, 1)
+        self.attribute_to_value(bad,  attribute, 3)
+        print('remember to set comments for bad')
+        return(done, bad)
+
 
 ###############################
 #     Old high level funcs    #

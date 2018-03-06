@@ -11,8 +11,8 @@ Created on Mon Feb 20 20:22:25 2017
 #  Module for crystal analysis
 ##########################################################
 
-import config
-import numpy as np
+import icarus.config as config
+import numpy as np, os
 from pymatgen import MPRester
 import pickle
 import pymatgen.io.vasp as io
@@ -20,6 +20,8 @@ import pymatgen.electronic_structure.plotter as plotter
 import collections
 import math
 import json
+from zipfile import ZipFile
+
 
 API_KEY = config.matprojapi
 
@@ -34,7 +36,8 @@ API_KEY = config.matprojapi
      C 0.16
 '''
 #--------#--------#
-
+def relpath(filelocation):
+    return(os.path.join(os.path.dirname(__file__), filelocation))
 def radii(filelocation):
     d = {}
     with open(filelocation) as f:
@@ -83,6 +86,23 @@ def vol_from_abc(a, b, c, Ain, Bin, Cin):
     A = Ain * np.pi / 180 ; B = Bin * np.pi / 180 ; C = Cin * np.pi / 180
     V = np.sqrt(1 - np.cos(A)**2 - np.cos(B)**2 - np.cos(C)**2 + 2*np.cos(A)*np.cos(B)*np.cos(C)) * a * b * c
     return(V)
+
+def download_cifs(mpids, zipfilename):
+    """deposits cif files from materials project into a zipped directory
+
+    Inputs
+        mpids: iterable of materials id strings such as 'mp-19' to get POSCARS for
+        zipfilename: filename of zip folder created
+
+    Outputs
+        places POSCAR files into filepath/{mpid}_POSCAR
+    """
+    with MPRester(config.matprojapi) as mpr:
+        docs = mpr.query({'material_id': {'$in': mpids}}, ['material_id', 'pretty_formula','cifs.computed'])
+    with ZipFile(zipfilename, 'w') as f:
+        for d in docs:
+            f.writestr('{}.cif'.format(d['material_id']),d['cifs.computed'])
+
 
 # def fullprint(*args, **kwargs):
 #     from pprint import pprint
@@ -326,13 +346,13 @@ def get_cbm_loose(BS, cutoff = 0.026):
 ###########################
 
 # Grab data itself
-with open('data/rarity/HHI_Production.json', 'r') as f:
+with open(relpath('data/rarity/HHI_Production.json'), 'r') as f:
     HHI_P = json.load(f)
-with open('data/rarity/HHI_Reserves.json', 'r') as f:
+with open(relpath('data/rarity/HHI_Reserves.json'), 'r') as f:
     HHI_R = json.load(f)
-with open('data/rarity/surface_abundance.json', 'r') as f:
+with open(relpath('data/rarity/surface_abundance.json'), 'r') as f:
     abundance = json.load(f)
-with open('data/rarity/weights.csv') as f:
+with open(relpath('data/rarity/weights.csv'), 'r') as f:
     indata = [line.rstrip('\n').split(',') for line in f.readlines()]
 weights = {i[1]: float(i[3].strip(']').strip('[')) for i in indata[1:110]}
 rarity_allowed_atoms = {'H','Li','Be','B','C','N','O','F','Na','Mg','Al','Si','P','S','Cl','K','Ca','Sc','Ti','V','Cr',
