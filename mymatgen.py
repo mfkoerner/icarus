@@ -87,7 +87,7 @@ def vol_from_abc(a, b, c, Ain, Bin, Cin):
     V = np.sqrt(1 - np.cos(A)**2 - np.cos(B)**2 - np.cos(C)**2 + 2*np.cos(A)*np.cos(B)*np.cos(C)) * a * b * c
     return(V)
 
-def download_cifs(mpids, zipfilename='cifs', style='cifs.computed'):
+def download_cifs(mpids, zipfilename='cifs.zip', style='cifs.computed'):
     """deposits cif files from materials project into a zipped directory
 
     Inputs
