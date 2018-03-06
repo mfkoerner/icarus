@@ -37,12 +37,13 @@ git push                                                #Publish your changes to
 (go to https://github.com/mfkoerner/icarus)
 go to branches tab (https://github.com/mfkoerner/icarus/branches)
 create a new pull request on your branch
-Mitchell will merge it into the master branch
+Merge it into the master branch
 
 ######################################
             Clean up
 ######################################
 git checkout master                                     #change to master branch
+git pull                                                #makes your master branch up to date
 git branch -d FINISHED_PROJECT_NAME                     #delete old branch
 git remote prune origin                                 #delete remote branch on home computer
 git branch -a                                           #check updates
