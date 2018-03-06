@@ -99,7 +99,7 @@ def download_cifs(mpids, zipfilename='cifs.zip', style='cifs.computed'):
         places cif files into filepath/zipfilename
     """
     with MPRester(config.matprojapi) as mpr:
-        docs = mpr.query({'material_id': {'$in': mpids}}, ['material_id', 'pretty_formula','cifs.computed'])
+        docs = mpr.query({'material_id': {'$in': mpids}}, ['material_id', 'pretty_formula', style])
     with ZipFile(zipfilename, 'w') as f:
         for d in docs:
             f.writestr('{}.cif'.format(d['material_id']),d[style])
