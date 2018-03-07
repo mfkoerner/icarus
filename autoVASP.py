@@ -488,7 +488,7 @@ class Status(object):
     def __init__(self, filepath = config.statuspath):
         self.filepath = filepath
         self.dictform = self.statusread()
-        self.all_mpids = list(self.dictform.keys())
+        self.all_mpids = set(self.dictform.keys())
 
     def statuswrite(self, filepath = None):
         """Writes a status dictionary to the official status file
