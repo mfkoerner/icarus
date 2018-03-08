@@ -489,6 +489,11 @@ class Status(object):
         self.filepath = filepath
         self.dictform = self.statusread()
         self.all_mpids = set(self.dictform.keys())
+        self.subspace = self.get_mpids('comments', 'subspacematrix')
+        self.killed = self.get_mpids('comments', 'Killed (not job.e)')
+        self.metallic = self.get_mpids('comments', 'metallic')
+        self.timeout = self.get_mpids('comments', 'timeout')
+        self.mem = self.get_mpids('comments', 'Insufficient Memory')
 
     def statuswrite(self, filepath = None):
         """Writes a status dictionary to the official status file
