@@ -515,6 +515,7 @@ class Status(object):
         header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
         outlines = [header] + outlines
         outlines = [i + '\n' for i in outlines]
+        outlines.sort()
         with open(filepath, 'w') as f:
             f.writelines(outlines)
 
