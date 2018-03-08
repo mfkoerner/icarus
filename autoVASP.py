@@ -512,10 +512,10 @@ class Status(object):
             filepath = self.filepath
         outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(i['mpid'], i['static'], i['absorb'], i['origin'], i['comments'])
                     for i in self.dictform.values()]
-        header = '{:<12}{:<7}{:<7}{:<12}{}'.format('mpid', 'static', 'absorb', 'origin', 'comments')
-        outlines = [header] + outlines
+        header = '{:<12}{:<7}{:<7}{:<12}{}\n'.format('mpid', 'static', 'absorb', 'origin', 'comments')
         outlines = [i + '\n' for i in outlines]
         outlines.sort()
+        outlines = [header] + outlines
         with open(filepath, 'w') as f:
             f.writelines(outlines)
 
