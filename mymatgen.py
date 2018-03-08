@@ -210,6 +210,10 @@ def quickplot(vasprun_fp = 'vasprun.xml'):
     bandstructure = get_BSobject(vasprun_fp)
     myplot = plotter.BSPlotter(bandstructure)
     myplot.show()
+def quickplot_bympid(mpid):
+    bandstructure = importband(mpid)
+    myplot = plotter.BSPlotter(bandstructure)
+    myplot.show()
 def importband(mpid):
     with MPRester(API_KEY) as mpr:
         return(mpr.get_bandstructure_by_material_id(mpid))
