@@ -598,6 +598,24 @@ class Status(object):
             mpids = [mpids]
         for mpid in mpids:
             self.dictform[mpid][attribute] = value
+    def toss(self, mpids, comment):
+        """sets static and absorb to -1 and then sets the comment on all mpids given
+
+        Inputs:
+            mpids:      iterable of mpid strings to set
+            comment:    the comment you wnat to associate with this dead compound
+
+        Outputs:
+            modifies self.dictform (base data) to include this update
+            specifically, sets static and absorb to -1
+            sets comments to comment
+        """
+        if type(mpids) == str:          #handles single mpid passed in as a string
+            mpids = [mpids]
+        for mpid in mpids:
+            self.dictform[mpid]['static'] = -1
+            self.dictform[mpid]['absorb'] = -1
+            self.dictform[mpid]['comments'] = comment
     def update_from_playground(self, attribute):
         """Very dangerous function to be used after finishing a batch of calculations
 
