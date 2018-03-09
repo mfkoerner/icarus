@@ -535,7 +535,7 @@ class Status(object):
         """
         if filepath is None:
             filepath = self.filepath
-        slens = [12, 19, 26, 38]
+        slens = [12, 19, 26, 38]    #needs to match the sizes in outlines and header for statuswrite
         with open(filepath, 'r') as f:
             inlines = [i.rstrip('\n') for i in f.readlines()]
         header = inlines.pop(0)
