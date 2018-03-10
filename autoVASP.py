@@ -348,14 +348,40 @@ class Run(object):
         PPN:        processers per node
         WALLTIME:   time that the run goes for
     """
-    def __init__(self, compound = None, NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime, version = 'auto'):
+    def __init__(self, compound = None, NODES = None, PPN = None, WALLTIME = None, version = 'auto', assume_memerror = True):
         if compound is None:
             compound = autocompound()
         self.compound = compound
-        self.NODES = NODES
-        self.PPN = PPN
-        self.WALLTIME = WALLTIME
-        self.version = version
+
+        if NODES is None:
+            self.NODES = config.VASP_nodes
+        else:
+            self.NODES = NODES
+
+        if PPN is None:
+            self.PPN = config.VASP_ppn
+        else:
+            self.PPN = PPN
+
+        if WALLTIME is None:
+            self.WALLTIME = config.VASP_walltime
+        else:
+            self.WALLTIME = WALLTIME
+
+        if version == 'auto':
+            if 'version533' in os.listdir('.'):
+                self.version = '5.3.3'
+            else:
+                self.version = '5.4.4'
+        else:
+            self.version = version
+            
+        if assume_memerror and self.version == '5.3.3':
+            if NODES is None:
+                self.NODES = 4
+            if WALLTIME is None:
+                WALLTIME = 2 * config.VASP_walltime
+
     def STATIC(self, kpoints = 30, encut = 'auto', submit = True):
         """Runs a static job
 
