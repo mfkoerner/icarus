@@ -6,7 +6,6 @@ Created on Sun Jun  4 23:57:28 2017
 @author: mitchell
 """
 
-#Soon need to change around SYMPREC back to 1e-4
 
 jobText = """#!/bin/sh
 ############################################################################## 
@@ -45,6 +44,50 @@ echo $NODE_LIST
 ulimit -s unlimited 
 #VASP.5.4.4 non-collinear build (has SOC)
 /sw/mrl/mvapich/bin/mpirun -n $NUM_CORES -machinefile nodes /home/burak/vasp.5.4.4/bin/vasp_ncl > out                                         
+#
+# End of script-file. 
+# 
+############################################################################### 
+"""
+
+jobText533 = """#!/bin/sh
+############################################################################## 
+# First we have some directives to the queueing system. Must be in 
+# the first block of comment lines. 
+#
+##PBS -q largemem
+#PBS -l nodes={0}:ppn={1}
+#PBS -l walltime={2}:00:00:00
+# 
+# Make sure that we are in the same subdirectory as where the qsub command 
+# is issued. 
+# 
+cd $PBS_O_WORKDIR 
+#
+#  Determine the nodes, num process, etc.
+#  cat $PBS_NODEFILE > nodes
+#  oddly,, this version puts all nodes on one line...
+#  mpirun wants separate lines though.
+while read machine
+do
+echo $machine
+done < $PBS_NODEFILE > nodes
+# Get number of nodes allocated
+NO_OF_NODES=`cat $PBS_NODEFILE | egrep -v '^#'\|'^$' | wc -l | awk '{{print $1}}'`
+NODE_LIST=`cat $PBS_NODEFILE`
+NUM_CORES=`cat $PBS_NODEFILE | wc -w`
+#
+# Our list of nodes...                      
+echo $NODE_LIST
+# 
+# 
+# Run the executable. *DO NOT PUT* a '&' at the end - it will not 
+# work. 
+#
+ulimit -s unlimited 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/openmpi/lib
+#VASP.5.3.3 Jakoah Build (can handle multiple nodes)
+/opt/openmpi/bin/mpirun -np $NUM_CORES -machinefile nodes /home/jdb/bin/vasp533_openmpi-jakoah > out                                         
 #
 # End of script-file. 
 # 
@@ -186,9 +229,29 @@ def absorb(indict, NBANDS):
     indict['SIGMA'] = (0.002, 'electron smearing: default is 0.2 eV')
 
 
-def write_job(NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime):
+def write_job(NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime, version = 'auto'):
+    """write the job text
+
+        Inputs:
+            NODES:      how many nodes to run on
+            PPN:        Processers per node. Braid can do 16, 20, 24 or less
+            WALLTIME:   Requested time for job
+            version:    auto bases off of versionXXX file in parent directory
+                        '5.3.3' gives 5.3.3 and '5.4.4' gives 5.4.4
+                        no other options at present
+    """
+    if version == 'auto':
+        if 'version533' in os.listdir('../'):
+            version = '5.3.3'
+        else:
+            version = '5.4.4'
     with open('job', 'w') as f:
-        f.write(jobText.format(NODES,PPN,WALLTIME))
+        if version == '5.4.4':
+            f.write(jobText.format(NODES,PPN,WALLTIME))
+        elif version == '5.3.3':
+            f.write(jobText533.format(NODES,PPN,WALLTIME))
+        else:
+            raise ValueError('invalid version for write_job')
 def subjob():
     assert(needforjob.issubset(set(os.listdir())))
     call( ['qsub', 'job'] )
@@ -251,8 +314,14 @@ def autocompound():
 ###############################################################################
 
 
-
-
+def runDIRECTORY(dirs = config.VASP_directories):
+    """ directory setup """
+    for i in dirs:
+        if i not in os.listdir():
+            os.mkdir(i)
+    if 'params' not in os.listdir():
+        with open('params', 'w') as f:
+            f.write('')
 def runPOTCAR():
     """
     To begin you need POSCAR, job, hybridjob (put this in folder that holds the compounds)
@@ -268,214 +337,146 @@ def runPOTCAR():
              ['/home/jdb/vasp_support/potentials/potpaw_PBE.54/{}/POTCAR'.format(i)
              for i in POSnames], stdout = f)
     write_job()
-def runDIRECTORY(dirs = config.VASP_directories):
-    """ directory setup """
-    for i in dirs:
-        if i not in os.listdir():
-            os.mkdir(i)
-    if 'params' not in os.listdir():
-        with open('params', 'w') as f:
-            f.write('')
-def runKTEST(Compound, RUN = True):
-    """ ktest portion """
-    os.chdir('ktest')
-    indict = start_incar(Compound, 'ktest')
-    indict['ENCUT'] = 1200
-    write_INCAR(indict)
-    for i in range(20,61,10):
-        if '{:02d}'.format(i) not in os.listdir():
-            os.mkdir('{:02d}'.format(i))
-    for i in range(20,61,10):
-        os.chdir('{:02d}'.format(i))
-        write_KPOINTS(i)
-        write_job()
-        shutil.copy('../../POSCAR', '.')
-        shutil.copy('../../POTCAR', '.')
-        shutil.copy('../INCAR', '.')        
-        os.chdir('../')
-    if RUN:
-        for i in range(20,61,10):
-            os.chdir('{:02d}'.format(i))
+
+
+class Run(object):
+    """Run class to initiate vasp runs
+
+    Inputs:
+        compound:   name of material (defaults to directory name)
+        NODES:      number of nodes to run on
+        PPN:        processers per node
+        WALLTIME:   time that the run goes for
+    """
+    def __init__(self, compound = None, NODES = config.VASP_nodes, PPN = config.VASP_ppn, WALLTIME = config.VASP_walltime, version = 'auto'):
+        if compound is None:
+            compound = autocompound()
+        self.compound = compound
+        self.NODES = NODES
+        self.PPN = PPN
+        self.WALLTIME = WALLTIME
+        self.version = version
+    def STATIC(self, kpoints = 30, encut = 'auto', submit = True):
+        """Runs a static job
+
+        Inputs
+            submit:
+                True is default and whole function runs
+                False runs everything but submit it
+                'only' assumes it has already been run with submit = False
+        """
+        os.chdir('static')
+        if not submit == 'only':
+            shutil.copy('../POSCAR', '.')
+            shutil.copy('../POTCAR', '.')
+            write_KPOINTS(kpoints)
+            tester = {}
+            permaread(tester, '../params')
+            if not 'ENCUT' in tester.keys():
+                if encut == 'auto':
+                    permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
+                else:
+                    permawrite({'ENCUT': encut}, path = '../params')
+            indict = start_incar(self.compound, 'static', Parallel = False)
+            write_INCAR(indict)
+            write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        if submit:
             subjob()
-            os.chdir('../')
-        os.chdir ('../')
-def runENTEST(Compound, RUN = True):
-    """
-    ENTEST PORTION
-
-    Remember to check successful runs with wavecheck function (already in path)
-    Simple solution:
-    for i in {03..15..2}; do echo $i; tail -2 ${i}/out; done
-    
-    Better one:
-    for i in {03..15..2}; do
-    echo $i
-    cat $i/OUTCAR | grep TOTEN | tail -1 | sed 's/free  energy   TOTEN  =      //g'
-    echo -e '\n'
-    done
-    
-    Remember to copy good kpoints file to base directory for each
-    (Rb and K directories)
-    """
-    os.chdir('entest')
-    shutil.copy('../ktest/KPOINTS', '../')
-    for i in range(4, 12):
-        if '{:02d}'.format(i) not in os.listdir():
-            os.mkdir('{:02d}'.format(i))
-    for i in range(4, 12):
-        os.chdir('{:02d}'.format(i))
-        write_job()
-        shutil.copy('../../ktest/KPOINTS', '.')
-        shutil.copy('../../ktest/KPOINTS', '../../')
-        shutil.copy('../../POSCAR', '.')
-        shutil.copy('../../POTCAR', '.')
-        indict = start_incar(Compound, 'entest')
-        indict['ENCUT'] = 100*i
-        write_INCAR(indict)
-        os.chdir('../')
-    if RUN:
-        for i in range(4, 12):
-            os.chdir('{:02d}'.format(i))
-            subjob()
-            os.chdir('../')
         os.chdir('../')
 
-def runSTATIC(Compound = None, kpoints = 30, encut = 'auto', submit = True):
-    """Runs a static job
+    def BAND(self):
+        """
+        band portion (REMEMBER TO PUT KPOINTS IN BAND FOLDER)
 
-    Inputs
-        submit:
-            True is default and whole function runs
-            False runs everything but submit it
-            'only' assumes it has already been run with submit = False
-    """
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('static')
-    if not submit == 'only':
-        shutil.copy('../POSCAR', '.')
-        shutil.copy('../POTCAR', '.')
-        write_KPOINTS(kpoints)
-        tester = {}
-        permaread(tester, '../params')
-        if not 'ENCUT' in tester.keys():
-            if encut == 'auto':
-                permawrite({'ENCUT': autoencut(path='POSCAR')}, path = '../params')
-            else:
-                permawrite({'ENCUT': encut}, path = '../params')
-        indict = start_incar(Compound, 'static', Parallel = False)
+        check to make sure static runs went alright
+        remember to use wavecheck program to check runs
+        
+        make sure bands KPOINTS file is already in the band directory
+        """        
+        os.chdir('band')
+        indict = start_incar(self.compound, 'band', Parallel = False, Band = True)
         write_INCAR(indict)
-        write_job()
-    if submit:
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( ['cp', '../static/POTCAR', '../static/POSCAR',
+               '../static/CHGCAR', '.'] )
         subjob()
-    os.chdir('../')
+        os.chdir('../')
+    def SOC(self):
+        """ SOC portion (Run at same time as bands) """
+        os.chdir('pbesoc')
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( ['cp', '../static/POTCAR', '../static/POSCAR',
+              '../static/CHGCAR', '../static/KPOINTS', '.'] )
+        indict = start_incar(self.compound, 'pbesoc calculation', Parallel = False, Soc = True, Continue_run = True)
+        write_INCAR(indict)
+        subjob()
+        os.chdir('../')
+    def SOCBAND(self):
+        """
+        SOC band portion 
 
-def runBAND(Compound = None):
-    """
-    band portion (REMEMBER TO PUT KPOINTS IN BAND FOLDER)
-
-    check to make sure static runs went alright
-    remember to use wavecheck program to check runs
-    
-    make sure bands KPOINTS file is already in the band directory
-    """        
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('band')
-    indict = start_incar(Compound, 'band', Parallel = False, Band = True)
-    write_INCAR(indict)
-    write_job(WALLTIME = 2)
-    call( ['cp', '../static/POTCAR', '../static/POSCAR',
-           '../static/CHGCAR', '.'] )
-    subjob()
-    os.chdir('../')
-def runSOC(Compound):
-    """ SOC portion (Run at same time as bands) """
-    os.chdir('pbesoc')
-    write_job(NODES = 1, PPN = 20, WALLTIME = 2)
-    call( ['cp', '../static/POTCAR', '../static/POSCAR',
-          '../static/CHGCAR', '../static/KPOINTS', '.'] )
-    indict = start_incar(Compound, 'pbesoc calculation', Parallel = False, Soc = True, Continue_run = True)
-    write_INCAR(indict)
-    subjob()
-    os.chdir('../')
-def runSOCBAND(Compound = None):
-    """
-    SOC band portion 
-
-    Make sure that pbesoc has finished running. It's ok if band did not finish
-    """
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('SOCband')
-    write_job(NODES = 1, PPN = 20, WALLTIME = 3)
-    call( ['cp', '../static/POTCAR', '../pbesoc/POSCAR',
-           '../pbesoc/CHGCAR', '../band/KPOINTS', '.'] )
-    indict = start_incar(Compound, 'Spin Orbit Coupling Band Structure', Parallel = False, Soc = True, Band = True)
-    write_INCAR(indict)
-    subjob()
-    os.chdir('../')
-def runHSESOC(Compound = None):
-    """ HSESOC section (run at same time as bands)"""
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('HSESOC')
-    call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR',
-           '../static/KPOINTS', '.'] )
-    write_job(NODES = 1, PPN = 20, WALLTIME = 50)
-    indict = start_incar(Compound, 'HSESOC static', Parallel = False, Soc = True, Continue_run = True, Hse = True)
-    write_INCAR(indict)
-    subjob()
-    os.chdir('../')
-def runSHBAND(Compound = None):
-    """ SHband presetup section
-    (SHband is pretty manual for KPOINTS and qsub)
-    make sure that HSESOC is finished to run this """
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('SHband')
-    call( ['cp', '../POTCAR', '../HSESOC/POSCAR', '../HSESOC/CHGCAR', '.'] )
-    write_job(NODES = 1, PPN = 20, WALLTIME = 50)
-    indict = start_incar(Compound, 'SOC + HSE06 band structure calculation', Parallel = False, Soc = True, Hse = True, Band = True)
-    print('Remember to prep KPOINTS based on graphs!')
-    os.chdir('../')
-def runABSORB(Compound = None):
-    """ Absorbtion spectrum calculation """
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('absorb')
-    write_job(WALLTIME = 2)
-    call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'] )
-    with open('../static/KPOINTS', 'r') as f:
-        inlines = f.readlines()
-    assert ( inlines[2][0] in {'A','a'} ),  "Needs to be automatic scheme in kpoints"
-    density = int(inlines[3].strip(' '))
-    # write_KPOINTS(3*density)
-    write_KPOINTS(60); print('USING 60 KPOINTS FORCED. Change back later')
-    NBANDS = getNBANDS('../static/OUTCAR')
-    indict = start_incar(Compound, 'Absorption run', Parallel = False, Absorb = 2*NBANDS)
-    write_INCAR(indict)
-    subjob()
-    os.chdir('../')
-def runDOS(Compound = None):
-    """ DOS Calculation """
-    if Compound is None:
-        Compound = autocompound()
-    os.chdir('DOS')
-    write_job(NODES = 1, PPN = 20, WALLTIME = 3)
-    call( [ 'cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'])
-    with open('../static/KPOINTS', 'r') as f:
-        inlines = f.readlines()
-    assert( inlines[2][0] in {'A','a'} ) #Needs to be automatic scheme in kpoints
-    density = int(inlines[3].strip(' '))
-    write_KPOINTS(3*density)
-    indict = start_incar(Compound, 'DOS run', Parallel = False, DOS = True)
-    write_INCAR(indict)
-    subjob()
-    os.chdir('../')
-
-def done(arg = '.'):
-    return('done' in os.listdir(arg) and 'notes' not in os.listdir(arg))
+        Make sure that pbesoc has finished running. It's ok if band did not finish
+        """
+        os.chdir('SOCband')
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( ['cp', '../static/POTCAR', '../pbesoc/POSCAR',
+               '../pbesoc/CHGCAR', '../band/KPOINTS', '.'] )
+        indict = start_incar(self.compound, 'Spin Orbit Coupling Band Structure', Parallel = False, Soc = True, Band = True)
+        write_INCAR(indict)
+        subjob()
+        os.chdir('../')
+    def HSESOC(self):
+        """ HSESOC section (run at same time as bands)"""
+        os.chdir('HSESOC')
+        call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR',
+               '../static/KPOINTS', '.'] )
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        indict = start_incar(self.compound, 'HSESOC static', Parallel = False, Soc = True, Continue_run = True, Hse = True)
+        write_INCAR(indict)
+        subjob()
+        os.chdir('../')
+    def SHBAND(self):
+        """ SHband presetup section
+        (SHband is pretty manual for KPOINTS and qsub)
+        make sure that HSESOC is finished to run this """
+        os.chdir('SHband')
+        call( ['cp', '../POTCAR', '../HSESOC/POSCAR', '../HSESOC/CHGCAR', '.'] )
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        indict = start_incar(self.compound, 'SOC + HSE06 band structure calculation', Parallel = False, Soc = True, Hse = True, Band = True)
+        print('Remember to prep KPOINTS based on graphs!')
+        os.chdir('../')
+    def ABSORB(self, KPOINTS = 'auto', NBANDS = 'auto'):
+        """ Absorbtion spectrum calculation """
+        os.chdir('absorb')
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'] )
+        density = int(inlines[3].strip(' '))
+        if KPOINTS == 'auto':
+            with open('../static/KPOINTS', 'r') as f:
+                inlines = f.readlines()
+            assert ( inlines[2][0] in {'A','a'} ),  "Needs to be automatic scheme in kpoints"
+            KPOINTS = 3*density
+        write_KPOINTS(KPOINTS)
+        if NBANDS == 'auto':
+            NBANDS = 2*getNBANDS('../static/OUTCAR')
+        indict = start_incar(self.compound, 'Absorption run', Parallel = False, Absorb = NBANDS)
+        write_INCAR(indict)
+        subjob()
+        os.chdir('../')
+    def DOS(self):
+        """ DOS Calculation """
+        os.chdir('DOS')
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( [ 'cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'])
+        with open('../static/KPOINTS', 'r') as f:
+            inlines = f.readlines()
+        assert( inlines[2][0] in {'A','a'} ) #Needs to be automatic scheme in kpoints
+        density = int(inlines[3].strip(' '))
+        write_KPOINTS(3*density)
+        indict = start_incar(self.compound, 'DOS run', Parallel = False, DOS = True)
+        write_INCAR(indict)
+        subjob()
+        os.chdir('../')
 
 
 ###############################
@@ -691,5 +692,71 @@ def diffFile(file1, file2, file3):
             end = end - remove
     with open(file3, 'w') as f:
         f.writelines([i + '\n' for i in list(end)])
+
+
+# Old Functions #
+    # def KTEST(self, RUN = True):
+    #     """ ktest portion """
+    #     os.chdir('ktest')
+    #     indict = start_incar(self.compound, 'ktest')
+    #     indict['ENCUT'] = 1200
+    #     write_INCAR(indict)
+    #     for i in range(20,61,10):
+    #         if '{:02d}'.format(i) not in os.listdir():
+    #             os.mkdir('{:02d}'.format(i))
+    #     for i in range(20,61,10):
+    #         os.chdir('{:02d}'.format(i))
+    #         write_KPOINTS(i)
+    #         write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+    #         shutil.copy('../../POSCAR', '.')
+    #         shutil.copy('../../POTCAR', '.')
+    #         shutil.copy('../INCAR', '.')        
+    #         os.chdir('../')
+    #     if RUN:
+    #         for i in range(20,61,10):
+    #             os.chdir('{:02d}'.format(i))
+    #             subjob()
+    #             os.chdir('../')
+    #         os.chdir ('../')
+    # def ENTEST(self, RUN = True):
+    #     """
+    #     ENTEST PORTION
+
+    #     Remember to check successful runs with wavecheck function (already in path)
+    #     Simple solution:
+    #     for i in {03..15..2}; do echo $i; tail -2 ${i}/out; done
+        
+    #     Better one:
+    #     for i in {03..15..2}; do
+    #     echo $i
+    #     cat $i/OUTCAR | grep TOTEN | tail -1 | sed 's/free  energy   TOTEN  =      //g'
+    #     echo -e '\n'
+    #     done
+        
+    #     Remember to copy good kpoints file to base directory for each
+    #     (Rb and K directories)
+    #     """
+    #     os.chdir('entest')
+    #     shutil.copy('../ktest/KPOINTS', '../')
+    #     for i in range(4, 12):
+    #         if '{:02d}'.format(i) not in os.listdir():
+    #             os.mkdir('{:02d}'.format(i))
+    #     for i in range(4, 12):
+    #         os.chdir('{:02d}'.format(i))
+    #         write_job()
+    #         shutil.copy('../../ktest/KPOINTS', '.')
+    #         shutil.copy('../../ktest/KPOINTS', '../../')
+    #         shutil.copy('../../POSCAR', '.')
+    #         shutil.copy('../../POTCAR', '.')
+    #         indict = start_incar(self.compound, 'entest')
+    #         indict['ENCUT'] = 100*i
+    #         write_INCAR(indict)
+    #         os.chdir('../')
+    #     if RUN:
+    #         for i in range(4, 12):
+    #             os.chdir('{:02d}'.format(i))
+    #             subjob()
+    #             os.chdir('../')
+    #         os.chdir('../')
 
 
