@@ -375,7 +375,7 @@ class Run(object):
                 self.version = '5.4.4'
         else:
             self.version = version
-            
+
         if assume_memerror and self.version == '5.3.3':
             if NODES is None:
                 self.NODES = 4
@@ -476,10 +476,10 @@ class Run(object):
         os.chdir('absorb')
         write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
         call( ['cp', '../static/POTCAR', '../static/POSCAR', '../static/CHGCAR', '.'] )
-        density = int(inlines[3].strip(' '))
         if KPOINTS == 'auto':
             with open('../static/KPOINTS', 'r') as f:
                 inlines = f.readlines()
+            density = int(inlines[3].strip(' '))
             assert ( inlines[2][0] in {'A','a'} ),  "Needs to be automatic scheme in kpoints"
             KPOINTS = 3*density
         write_KPOINTS(KPOINTS)
