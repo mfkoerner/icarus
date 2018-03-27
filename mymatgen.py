@@ -37,7 +37,8 @@ API_KEY = config.matprojapi
 '''
 #--------#--------#
 def relpath(filelocation):
-    return(os.path.join(os.path.dirname(__file__), filelocation))
+    # return(os.path.join(os.path.dirname(__file__), filelocation))
+    return(os.path.join(config.install_loc, filelocation))
 def radii(filelocation):
     d = {}
     with open(filelocation) as f:

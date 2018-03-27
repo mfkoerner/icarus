@@ -24,6 +24,9 @@ VASP_directories = ['static', 'band', 'pbesoc', 'SOCband', 'HSESOC', 'SHband', '
 # Default path to status.txt for vasp runs (contact mitchell for explanation)
 statuspath = 'path to status here'
 
+# Install Location here
+install_loc = 'install_location'
+
 # mpi-run settings for vasp
 VASP_nodes = 1
 VASP_ppn   = 16
