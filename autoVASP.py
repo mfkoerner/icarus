@@ -727,7 +727,7 @@ class Status(object):
         old = self.all_mpids - mpids
         overlap = mpids.intersection(mpids)
         olddict = self.check(old, do_print = False, do_return = True)
-        give_up = self.get_mpids('absorb', 1, invert = True, source = olddict)
+        give_up = self.get_mpids('absorb', [1, -1], invert = True, source = olddict)
         # Modify base data with new data
         for mpid in new:
             self.dictform[mpid] = { 'mpid': mpid,
