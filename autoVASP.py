@@ -665,6 +665,31 @@ class Status(object):
         self.attribute_to_value(bad,  attribute, 3)
         print('remember to set comments for bad')
         return(done, bad)
+    def check(self, mpids, do_print=True, do_return=False):
+        """Checks the currently stored values for an iterable of ids (or a single string)
+
+        Inputs:
+            mpids:      iterable of mpids to check
+            do_print:      default True, prints output in easy to read format
+            do_return:    default False, returns dictionary of entries
+
+        Outputs:
+            prints the status of those ids if do_print=True
+            returns a smaller version of self.dictform with only the requested entries if do_return=True
+        """
+        if type(mpids) == str:
+            mpids = [mpids]
+        out = {i: self.dictform[i] for i in mpids}
+        if do_print:
+            outlines = ['{:<12}{:<7}{:<7}{:<12}{}'.format(self.dictform[i]['mpid'], self.dictform[i]['static'], 
+                self.dictform[i]['absorb'], self.dictform[i]['origin'], self.dictform[i]['comments']) for i in mpids]
+            header = '{:<12}{:<7}{:<7}{:<12}{}\n'.format('mpid', 'static', 'absorb', 'origin', 'comments')
+            print(header)
+            for item in outlines:
+                print(item)
+        if do_return:
+            return(out)
+
 
 
 ###############################
