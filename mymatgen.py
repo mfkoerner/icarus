@@ -129,7 +129,7 @@ def flatten(l):
         if isinstance(item, (list, tuple)):
             out.extend(flatten(item))
         else:
-        out.append(item)
+            out.append(item)
     return out
 
 def lengthsappend(lengths, label1, label2, specificDistance):
