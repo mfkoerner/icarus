@@ -722,6 +722,7 @@ class Status(object):
         if type(mpids) in {'list', 'tuple'}:
             mpids == set(mpids)
         assert (type(mpids) == set), "mpids should be input as a set"
+        # Relevant subsets
         new = mpids - self.all_mpids
         old = self.all_mpids - mpids
         overlap = mpids.intersection(mpids)
@@ -735,9 +736,11 @@ class Status(object):
                                     'origin': origin,
                                     'comments': comments
                                     }
+        # Print warnings
         if resource_warnings:
             print('Compounds to give up on:')
             self.check(give_up)
+        # return results
         return(new, old, overlap, give_up)
 
 
