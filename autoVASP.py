@@ -573,7 +573,7 @@ class Status(object):
         status = {i[0]: {headerlist[j]: i[j] for j in range(5)} for i in inlist}
         return(status)
 
-    def get_mpids(self, attribute, value):
+    def get_mpids(self, attribute, value, invert = False, source = None):
         """gets a list of mpids with a given attribute and status
 
         Inputs:
@@ -581,21 +581,28 @@ class Status(object):
             attribute:  one of "absorb", "static", "mpid", "origin", "comments"
             value:      what you want your attribute to be equal to
                         May input a list to check for multiple values
+            invert:     default False, if True inverts selection
+            source:     dictionary to search from, defaults to self.dictform
 
         Outputs:
             mpids:      list of ids which match the above criteria
         """
+        if source == None:
+            source = self.dictform
+        all_mpids = set(source.keys())
         if type(value) in {list, set, tuple}:
             values = value
         else:
             values = [value]
         mpidslist = []
         for val in values:
-            mpidslist.append({i for i in self.all_mpids if self.dictform[i][attribute] == val})
+            mpidslist.append({i for i in all_mpids if source[i][attribute] == val})
         mpids = mpidslist[0]
         if len(mpidslist) > 1:
             for i in range(len(mpidslist) - 1):
                 mpids = mpids.union(mpidslist[i + 1])
+        if invert:
+            mpids = all_mpids - mpids
         return(mpids)
 
     def set_from_file(self, filepath):
@@ -670,8 +677,8 @@ class Status(object):
 
         Inputs:
             mpids:      iterable of mpids to check
-            do_print:      default True, prints output in easy to read format
-            do_return:    default False, returns dictionary of entries
+            do_print:   default True, prints output in easy to read format
+            do_return:  default False, returns dictionary of entries
 
         Outputs:
             prints the status of those ids if do_print=True
@@ -689,6 +696,53 @@ class Status(object):
                 print(item)
         if do_return:
             return(out)
+
+    def add_origin(self, mpids, origin, resource_warnings = True, mpids_from_text = False, comments = ''):
+        """Adds mpids of the new origin to the database
+
+        Inputs:
+            mpids:              set of mpids in the new list (filepath to text file if mpids_from_text = True)
+            origin:             date of new set in 'Mmm-DD-YYYY' format
+            resource_warnings:  default True, print warnings of bad runs that are no longer needed
+            mpids_from_text:    default False, read mpids from a text file instead of input set
+
+        Outputs:
+            Modifies self.dictform (underlying data) to include new mpids with status 0 0 if they are new
+            Anything already in dictionary is ignored
+            if resource_warnings is on, it warns about mpids with status not 1 1 which are not in the new set
+            new:                set of mpids that were added
+            old:                set of mpids that already existed but were not in new one
+            overlap:            set of mpids that already existed and were in new one
+            give_up:            set of mpids that should be abandoned (returned regardless)
+        """
+        # Error handling and making sure mpids is a set of mp-###### strings
+        if mpids_from_text:
+            assert (type(mpids) == str), "using mpids_from_text requires filepath string for mpids input"
+            mpids = self.set_from_file(mpids)
+        if type(mpids) in {'list', 'tuple'}:
+            mpids == set(mpids)
+        assert (type(mpids) == set), "mpids should be input as a set"
+        new = mpids - self.all_mpids
+        old = self.all_mpids - mpids
+        overlap = mpids.intersection(mpids)
+        olddict = self.check(old, do_print = False, do_return = True)
+        give_up = self.get_mpids('absorb', 1, invert = True, source = olddict)
+        # Modify base data with new data
+        for mpid in new:
+            self.dictform[mpid] = { 'mpid': mpid,
+                                    'static': 0,
+                                    'absorb': 0,
+                                    'origin': origin,
+                                    'comments': comments
+                                    }
+        if resource_warnings:
+            print('Compounds to give up on:')
+            self.check(give_up)
+        return(new, old, overlap, give_up)
+
+
+
+
 
 
 
