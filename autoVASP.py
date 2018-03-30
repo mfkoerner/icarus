@@ -725,7 +725,7 @@ class Status(object):
         # Relevant subsets
         new = mpids - self.all_mpids
         old = self.all_mpids - mpids
-        overlap = mpids.intersection(mpids)
+        overlap = self.all_mpids.intersection(mpids)
         olddict = self.check(old, do_print = False, do_return = True)
         give_up = self.get_mpids('absorb', [1, -1], invert = True, source = olddict)
         # Modify base data with new data
