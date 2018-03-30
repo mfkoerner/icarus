@@ -124,13 +124,13 @@ Credit: http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
 '''
 #--------#--------#
 def flatten(l):
-  out = []
-  for item in l:
-    if isinstance(item, (list, tuple)):
-      out.extend(flatten(item))
-    else:
-      out.append(item)
-  return out
+    out = []
+    for item in l:
+        if isinstance(item, (list, tuple)):
+            out.extend(flatten(item))
+        else:
+        out.append(item)
+    return out
 
 def lengthsappend(lengths, label1, label2, specificDistance):
     try:
