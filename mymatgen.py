@@ -37,7 +37,8 @@ API_KEY = config.matprojapi
 '''
 #--------#--------#
 def relpath(filelocation):
-    return(os.path.join(os.path.dirname(__file__), filelocation))
+    # return(os.path.join(os.path.dirname(__file__), filelocation))
+    return(os.path.join(config.install_loc, filelocation))
 def radii(filelocation):
     d = {}
     with open(filelocation) as f:
@@ -87,21 +88,22 @@ def vol_from_abc(a, b, c, Ain, Bin, Cin):
     V = np.sqrt(1 - np.cos(A)**2 - np.cos(B)**2 - np.cos(C)**2 + 2*np.cos(A)*np.cos(B)*np.cos(C)) * a * b * c
     return(V)
 
-def download_cifs(mpids, zipfilename):
+def download_cifs(mpids, zipfilename='cifs.zip', style='cifs.computed'):
     """deposits cif files from materials project into a zipped directory
 
     Inputs
         mpids: iterable of materials id strings such as 'mp-19' to get POSCARS for
         zipfilename: filename of zip folder created
+        style: choose which cif to get from materialsproject
 
     Outputs
-        places POSCAR files into filepath/{mpid}_POSCAR
+        places cif files into filepath/zipfilename
     """
     with MPRester(config.matprojapi) as mpr:
-        docs = mpr.query({'material_id': {'$in': mpids}}, ['material_id', 'pretty_formula','cifs.computed'])
+        docs = mpr.query({'material_id': {'$in': mpids}}, ['material_id', 'pretty_formula', style])
     with ZipFile(zipfilename, 'w') as f:
         for d in docs:
-            f.writestr('{}.cif'.format(d['material_id']),d['cifs.computed'])
+            f.writestr('{}.cif'.format(d['material_id']),d[style])
 
 
 # def fullprint(*args, **kwargs):
@@ -122,13 +124,13 @@ Credit: http://rightfootin.blogspot.com/2006/09/more-on-python-flatten.html
 '''
 #--------#--------#
 def flatten(l):
-  out = []
-  for item in l:
-    if isinstance(item, (list, tuple)):
-      out.extend(flatten(item))
-    else:
-      out.append(item)
-  return out
+    out = []
+    for item in l:
+        if isinstance(item, (list, tuple)):
+            out.extend(flatten(item))
+        else:
+            out.append(item)
+    return out
 
 def lengthsappend(lengths, label1, label2, specificDistance):
     try:
@@ -207,6 +209,10 @@ def get_BSobject(vasprun_fp = 'vasprun.xml'):
     return(bandstructure)
 def quickplot(vasprun_fp = 'vasprun.xml'):
     bandstructure = get_BSobject(vasprun_fp)
+    myplot = plotter.BSPlotter(bandstructure)
+    myplot.show()
+def quickplot_bympid(mpid):
+    bandstructure = importband(mpid)
     myplot = plotter.BSPlotter(bandstructure)
     myplot.show()
 def importband(mpid):
