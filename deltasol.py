@@ -43,3 +43,22 @@ def count_valence(structure, return_all = False):
         return(total, species, valences)
     else:
         return(total)
+
+def find_NELECT(fp):
+    """
+    Finds NELECT from an OUTCAR file
+
+    Inputs:
+        fp:             filepath to OUTCAR file which should be read
+
+    Outputs:
+        n_electrons:    Number of electrons in the run OUTCAR is representing
+                        comes from NELECT = ???.???? line
+    """
+    with open(fp, "r") as f:
+        inlines = f.readlines()
+    NELECT_lines = [i for i in inlines if "NELECT" in i]
+    assert len(NELECT_lines) == 1, "There should be exactly one line in OUTCAR with 'NELECT'"
+    line = NELECT_lines[0]
+    n_electrons = float(line.split("=")[1].split()[0].strip())
+    return(n_electrons)
