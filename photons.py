@@ -38,7 +38,7 @@ def getNkPts(bd):
 				return int(line.split()[1])
 				break
 
-def getDielectric(bd):
+def getDielectric(bd, anisotropic=False):
 	''' Parse OUTCAR for dielectric properties, convert to appropriate form '''
 	fname = os.path.join(bd, 'OUTCAR')
 	with open(fname, 'r') as f:
@@ -59,13 +59,17 @@ def getDielectric(bd):
 			break
 		EepsIm.append([float(ri) for ri in raw[i].strip('\n').split()])	#Energy (frequency) then X,Y,Z,XY,YZ,ZX for imaginary component
 	E = np.array(EepsIm)[:,0]						#Energies pulled from first part of EepsIm
-	epsIm = np.array([isotropic(row[1:]) for row in EepsIm])	#epsIm is the isotropic equivilent values for each energy
 	for i in range(lnReal+3,lnReal+NEDOS+3):
 		if len(raw[i]) < 5:
 			# print('DIELECTRIC DATA TERMINATED AT ONLY {} POINTS'.format(i-lnReal-3))
 			break
 		EepsRe.append([float(ri) for ri in raw[i].strip('\n').split()])	#Real part from above
-	epsRe = np.array([isotropic(row[1:]) for row in EepsRe])	#Real part for epsIm, this time is epsRe
+	if anisotropic:
+		epsIm = np.array([row[1:] for row in EepsIm])
+		epsRe = np.array([row[1:] for row in EepsRe])
+	else:
+		epsIm = np.array([isotropic(row[1:]) for row in EepsIm])	#epsIm is the isotropic equivilent values for each energy
+		epsRe = np.array([isotropic(row[1:]) for row in EepsRe])	#Real part for epsIm, this time is epsRe
 	return E, epsRe + 1j*epsIm 					#Returns list of isotropic equivalent values
 
 def saveResults(bd, E, alpha, eps):
