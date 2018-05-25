@@ -36,7 +36,7 @@ def curv2effMass(A):
 	Ahat = A*1.602e-19/1e10**2 # parabolic curvature converted to units of J m^2
 	return hbar**2/2/Ahat/m0
 
-def fitParabola(x, y, ii, ax=None, n=3, left=False):
+def fitParabola(x, y, ii, dc, ax=None, n=3, left=False):
 	''' Estimate carrier effective mass along band
 		x :    Momentum (k) in inverse Angstroms
 		y :    Energy (E) in eV
@@ -46,12 +46,15 @@ def fitParabola(x, y, ii, ax=None, n=3, left=False):
 		left : (default) Boolean, fit to left along E(k) dispersion diagram?
 	'''
 	x0, y0 = x[ii], y[ii]
+	if (left and ii-n < 0) | (~left and ii+n+1 > x.size-1):
+		print('WARNING: NOT ENOUGH POINTS TO FIT PARABOLA AT K-POINT {}, SKIPPED'.format(ii))
+		return None
 	if left:
 		xx, yy = x[ii-n : ii+1], y[ii-n : ii+1]
-		xxx = x[ii-10: ii+1]
+		xxx = x[max(0, ii-10): ii+1]
 	else:
 		xx, yy = x[ii : ii+n+1], y[ii : ii+n+1]
-		xxx = x[ii: ii+11]
+		xxx = x[ii: min(ii+11, x.size-1)]
 	popt, pcov = curve_fit(quad, xx-x0, yy-y0)
 	if ax:
 		ax.plot(xxx, y0+quad(xxx-x0, popt[0]), '-', c='#A83425')
@@ -124,7 +127,7 @@ def trueExtremum(jj, Eband, maximum=True):
 # HIGH LEVEL FUNCTIONS #
 # ******************** #
 
-def masses(kd, E, K, pb, ax=None, Etol=1e-2):
+def masses(kd, E, K, pb, dc, ax=None, Etol=1e-2):
 	''' Estimate carrier effective masses using the parabolic approximation, optionally plot fits
 		kd :   Momentum coordinate along BZ high symmetry path (output of electrons.momentumCoord)
 		E :    Array of energy eigenvalues (optionally relative to VBM)
@@ -152,18 +155,24 @@ def masses(kd, E, K, pb, ax=None, Etol=1e-2):
 		jj = trueExtremum(jj, Eband, maximum=maxFlag[bt])
 		left, right = fitDirection(Eband, jj, kd, pb, K)
 		for ii in left:
-			mii = fitParabola(kd, Eband, ii, ax=ax, left=True)
+			mii = fitParabola(kd, Eband, ii, dc, ax=ax, left=True)
+			if mii is None:
+				break
 			if bt is 'cb':
 				me.append(mii)
 			else:
-				mh.append(-mii)
+				mii = -mii
+				mh.append(mii)
 			print( '     k-point #{:>4}  (LEFT) : {:7.2f}'.format(ii, mii) )
 		for ii in right:
-			mii = fitParabola(kd, Eband, ii, ax=ax, left=False)
+			mii = fitParabola(kd, Eband, ii, dc, ax=ax, left=False)
+			if mii is None:
+				break
 			if bt is 'cb':
 				me.append(mii)
 			else:
-				mh.append(-mii)
+				mii = -mii
+				mh.append(mii)
 			print( '     k-point #{:>4} (RIGHT) : {:7.2f}'.format(ii, mii) )
 	return me, mh
 

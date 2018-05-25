@@ -19,11 +19,8 @@ Currently only handles an isotropic equivalent for the dielectric / absorption t
 # import packages, apply stylesheet
 import config
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-import electrons as el
+from electrons import np, plt, getTotalDOS, bandgap
 
-plt.style.use(config.plot_style)
 
 
 # ****************** #
@@ -41,7 +38,7 @@ def getNkPts(bd):
 				return int(line.split()[1])
 				break
 
-def getDielectric(bd):
+def getDielectric(bd, anisotropic=False):
 	''' Parse OUTCAR for dielectric properties, convert to appropriate form '''
 	fname = os.path.join(bd, 'OUTCAR')
 	with open(fname, 'r') as f:
@@ -62,13 +59,17 @@ def getDielectric(bd):
 			break
 		EepsIm.append([float(ri) for ri in raw[i].strip('\n').split()])	#Energy (frequency) then X,Y,Z,XY,YZ,ZX for imaginary component
 	E = np.array(EepsIm)[:,0]						#Energies pulled from first part of EepsIm
-	epsIm = np.array([isotropic(row[1:]) for row in EepsIm])	#epsIm is the isotropic equivilent values for each energy
 	for i in range(lnReal+3,lnReal+NEDOS+3):
 		if len(raw[i]) < 5:
 			# print('DIELECTRIC DATA TERMINATED AT ONLY {} POINTS'.format(i-lnReal-3))
 			break
 		EepsRe.append([float(ri) for ri in raw[i].strip('\n').split()])	#Real part from above
-	epsRe = np.array([isotropic(row[1:]) for row in EepsRe])	#Real part for epsIm, this time is epsRe
+	if anisotropic:
+		epsIm = np.array([row[1:] for row in EepsIm])
+		epsRe = np.array([row[1:] for row in EepsRe])
+	else:
+		epsIm = np.array([isotropic(row[1:]) for row in EepsIm])	#epsIm is the isotropic equivilent values for each energy
+		epsRe = np.array([isotropic(row[1:]) for row in EepsRe])	#Real part for epsIm, this time is epsRe
 	return E, epsRe + 1j*epsIm 					#Returns list of isotropic equivalent values
 
 def saveResults(bd, E, alpha, eps):
@@ -163,14 +164,15 @@ def plotAbsorption(ax, hnu, alpha, xl=(0, 4), yl=(1e2, 1e7), rel2eg=None, lbl=No
 # HIGH LEVEL #
 # ********** #
 
-def optical(bd):
+def optical(bd, save=False):
 	''' DESCRIPTION GOES HERE '''
 	Nk = getNkPts(bd) 							#Gets number of irreducible kpoints but never uses it :O
 	E, eps = getDielectric(bd)   				#Gets lists of E and equivilent eigenvalues (real + i*imag) for dialectric function
 	N, alpha = dielec2optical(E, eps)			#N (dielectric constant) and alpha (absorption coefficient) from dielectric equivilent eigenvalues
 
-	Edos, tdos = el.getTotalDOS(bd)				#arrays of len NEDOS with energy and DOS at that energy
-	Eg = el.bandgap(Edos, tdos)					#Calculates bandgap from DOS data
+	Edos, tdos = getTotalDOS(bd)				#arrays of len NEDOS with energy and DOS at that energy
+	Eg = bandgap(Edos, tdos)					#Calculates bandgap from DOS data
 
-	saveResults(bd, E, alpha, eps)				#Saves Energy, absorption, eigenvalue to basedir/optical.csv
+	if save:
+		saveResults(bd, E, alpha, eps)				#Saves Energy, absorption, eigenvalue to basedir/optical.csv
 	return E, alpha, eps, N, Eg 				#Returns Energy, absorption, eigenvalue, refractive index, bandgap

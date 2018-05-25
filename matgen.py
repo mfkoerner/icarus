@@ -83,7 +83,10 @@ def getSpaceGroup(mpid):
 
 def getFormula(mpid):
 	''' Get pretty formula for entry with material_id "mpid" '''
-	return mpr.query(criteria={'material_id': mpid}, properties=['pretty_formula'])[0]['pretty_formula']
+	if mpid == 'mp-CABB':
+		return 'Cs2AgBiBr6'
+	else:
+		return mpr.query(criteria={'material_id': mpid}, properties=['pretty_formula'])[0]['pretty_formula']
 
 def getRealLatt(mpid):
 	''' Get the real lattice for a single material from the 'structure' object'''
@@ -203,20 +206,26 @@ def getRunTypes(mpids):
 
 def calcMasses(mpids, ktol=1e-1):
 	''' '''
+	mass = {'me': {}, 'mh': {}}
 	for j, mpid in enumerate(mpids):
 		try:
 			E, K, _ = getMPbands(mpid)
 			print('\n############################# {} / {} #############################'.format(j+1, len(mpids)))
-			kd, _, pb = el.momentumCoord(K, ktol=ktol)
-			me, mh = ed.masses(kd, E, K, pb, ax=None)
-			data = {
-				'me_min': np.min(me), 'me_max': np.max(me), 'me_mean': np.mean(me),
-				'mh_min': np.min(mh), 'mh_max': np.max(mh), 'mh_mean': np.mean(mh)
-				}
-			with open(os.path.join(ad, 'MASS/{}'.format(mpid)), 'w') as fh:
-				json.dump(data, fh)
+			kd, dc, pb = el.momentumCoord(K, ktol=ktol)
+			me, mh = ed.masses(kd, E, K, pb, dc, ax=None)
+			mass['me'][mpid] = me
+			mass['mh'][mpid] = mh
+			with open('E:/Dropbox/Materials/Research/Project-Icarus/2018-03-28-MASS', 'wb') as fh:
+				pickle.dump(mass, fh)
+			# data = {
+			# 	'me_min': np.min(me), 'me_max': np.max(me), 'me_mean': np.mean(me),
+			# 	'mh_min': np.min(mh), 'mh_max': np.max(mh), 'mh_mean': np.mean(mh)
+			# 	}
+			# with open(os.path.join(ad, 'MASS/{}'.format(mpid)), 'w') as fh:
+			# 	json.dump(data, fh)
 		except:
 			print('FAILED TO CALCULATE FOR {}'.format(mpid))
+	return mass
 
 
 
@@ -274,7 +283,7 @@ def showRandom(mpids, ax=None, effMass=False, ktol=1e-1):
 		kd, E, K, dc, pb = mpSpaghetti(mpid, El=(-4, 8), ktol=ktol, ax=ax)
 	print('\n' + name)
 	if effMass:
-		ed.masses(kd, E, K, pb, ax=ax)
+		ed.masses(kd, E, K, pb, dc, ax=ax)
 
 
 
