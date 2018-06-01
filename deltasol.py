@@ -32,9 +32,12 @@ def count_valence(structure, return_all = False):
         total:      same
         species:    list of pymatgen specie objects (it's just structure.species)
         valences:   list of valences from atomic_valence for each atom in species
+
+    Bugs:
+        error handling is broken :( I'm so bad at python error handling...
     """
     species = structure.species
-    if len(set(species).intersection(bad_valences)) > 0:
+    if len(set(species).intersection(bad_valences)) > 0:     #somehow broken
         print (set(species).intersection(bad_valences) != {})
         raise ValueError("compound contains F-Block elements")
     valences = [atomic_valence[i.name] for i in species]
@@ -62,3 +65,54 @@ def find_NELECT(fp):
     line = NELECT_lines[0]
     n_electrons = float(line.split("=")[1].split()[0].strip())
     return(n_electrons)
+
+def product(array):
+    """
+    Returns the product of all values in the array
+    """
+    result = 1
+    for i in array:
+        result *= i
+    return(result)
+
+def multiply_cell(structure, valence, accept = (60, 80), verbose = False):
+    """
+    Multiplies a cell until it has the proper number of valence electrons
+     for 1/60 - 1/80 valence removed
+
+    Inputs:
+        structure:          pymatgen.structure to be multiplied
+        valence:            valence number of structure (from count_valence)
+        accept:             (min, max) for 1/min to 1/max
+        verbose:            verbose output for longer runs with >1 electron removed
+
+    Outputs:
+        final_structure:    new multiplied structure to be run
+        ncells:             atoms in final structure / atoms in initial
+        nelectrons:         correct number of electrons to add or remove for calculation
+        mult_cell:          multiplication of the structure that was used [2,3,1] means
+                             x*2 y*3 z*1
+
+    Bugs:
+        Prefers higher values of accept (towards 1/80 valence electrons) if the cell could
+         somehow choose either 80 or 70, it would pick 80 even though 70 is closer to middle
+    """
+    assert type(valence) == int, "valence must be an integer"
+    ncells = 1
+    mult_cell = [1,1,1]
+    final_structure = structure
+    while True:
+        nelectrons = 1
+        test = valence * ncells / nelectrons
+        while test >= min(accept):
+            if (test >= min(accept)) and (test <= max(accept)):
+                return(final_structure, ncells, nelectrons, test, mult_cell)
+            if verbose:
+                print("{} {} {} {}".format(ncells, nelectrons, test, mult_cell))
+            nelectrons += 1
+            test = valence * ncells / nelectrons
+        abc = final_structure.lattice.abc
+        index = abc.index(min(abc))
+        mult_cell[index] += 1
+        ncells = product(mult_cell)
+        final_structure = structure * mult_cell
