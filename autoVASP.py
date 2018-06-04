@@ -381,6 +381,7 @@ class Run(object):
                 self.NODES = 4
             if WALLTIME is None:
                 WALLTIME = 2 * config.VASP_walltime
+        self.emultiplier = {'e': 1, 'h': -1, 'n': 0}
 
     def STATIC(self, kpoints = 30, encut = 'auto', submit = True):
         """Runs a static job
@@ -503,6 +504,19 @@ class Run(object):
         write_INCAR(indict)
         subjob()
         os.chdir('../')
+    def DELTASOL(self, runtype, n_e, NELECT_default, SOC = False, KPOINTS = 30):
+        """ Delta-sol calculations for band gap """
+        assert runtype in {"e", "n", "h"}, "must have a standard runtype (e, h, n)"
+        os.chdir(runtype)
+        write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
+        call( [ 'cp', '../POTCAR', '../POSCAR', '.'] )
+        write_KPOINTS(KPOINTS)
+        indict = start_incar(self.compound, "DELTASOL {}".format(runtype), Parallel = False, SOC = SOC)
+        NELECT = NELECT_default + n_e * self.emultiplier[runtype]
+        indict["NELECT"] = (NELECT, "number of electrons in run")
+        write_INCAR(indict)
+        subjob()
+        os.chdir("../")
 
 
 ###############################
