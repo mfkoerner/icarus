@@ -511,7 +511,7 @@ class Run(object):
         write_job(NODES = self.NODES, PPN = self.PPN, WALLTIME = self.WALLTIME)
         call( [ 'cp', '../POTCAR', '../POSCAR', '.'] )
         write_KPOINTS(KPOINTS)
-        indict = start_incar(self.compound, "DELTASOL {}".format(runtype), Parallel = False, SOC = SOC)
+        indict = start_incar(self.compound, "DELTASOL {}".format(runtype), Parallel = False, Soc = SOC)
         NELECT = NELECT_default + n_e * self.emultiplier[runtype]
         indict["NELECT"] = (NELECT, "number of electrons in run")
         write_INCAR(indict)
