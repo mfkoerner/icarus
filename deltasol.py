@@ -39,7 +39,7 @@ def count_valence(structure, return_all = False):
     species = [str(i) for i in structure.species]
     if len(set(species).intersection(bad_valences)) > 0:     #somehow broken (maybe not anymore)
         raise ValueError("compound contains F-Block elements")
-    valences = [atomic_valence[i.name] for i in species]
+    valences = [atomic_valence[i] for i in species]
     total = sum(valences)
     if return_all:
         return(total, species, valences)
