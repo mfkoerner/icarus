@@ -34,11 +34,10 @@ def count_valence(structure, return_all = False):
         valences:   list of valences from atomic_valence for each atom in species
 
     Bugs:
-        error handling is broken :( I'm so bad at python error handling...
+        error handling is broken :( I'm so bad at python error handling... (possibly fixed)
     """
-    species = structure.species
-    if len(set(species).intersection(bad_valences)) > 0:     #somehow broken
-        print (set(species).intersection(bad_valences) != {})
+    species = [str(i) for i in structure.species]
+    if len(set(species).intersection(bad_valences)) > 0:     #somehow broken (maybe not anymore)
         raise ValueError("compound contains F-Block elements")
     valences = [atomic_valence[i.name] for i in species]
     total = sum(valences)
